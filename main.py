@@ -16,6 +16,8 @@ from kivy.config import ConfigParser
 from kivy.resources import resource_add_path
 from kivymd.card import MDSeparator
 from kivy.clock import Clock
+from kivy.core.window import Window
+from kivy.utils import platform
 
 
 from kivymd.bottomsheet import MDListBottomSheet, MDGridBottomSheet
@@ -100,10 +102,12 @@ NavigationLayout:
         NavigationDrawerToolbar:
             title: "Menu"
         NavigationDrawerIconButton:
+            id: lib_medu_btn
             icon: 'library-books'
             text: "Library"
             on_release: app.root.ids.scr_mngr.current = 'library'
         NavigationDrawerIconButton:
+            id: setting_menu_btn
             icon: 'settings'
             text: "Settings"
             on_release: app.select_settings_scr()
@@ -131,7 +135,7 @@ NavigationLayout:
                         id: lib_tab
                         name: 'library'
                         text: "Library" # Why are these not set!!!
-                        icon: "playlist-play"
+                        #icon: "playlist-play"
                         ScrollView:
                             do_scroll_x: False
                             MDList:
@@ -140,7 +144,7 @@ NavigationLayout:
                         id: details_tab
                         name: 'details'
                         text: 'Details'
-                        icon: "movie"
+                        #icon: "movie"
                         JournalDetails:
                             id: journal_details
                     
@@ -333,6 +337,10 @@ NavigationLayout:
         Color: 
             rgb: (1,1,1)
     
+
+#<ExitPopup>:
+#    MDLabel:
+#        font_style
 '''
 
 
@@ -343,7 +351,28 @@ def get_info(dic,key,default = ''):
 def clean_text(text):
     return text.replace('\n',' ').replace('\t',' ')
 
+class ExitPopup(MDDialog):
 
+    def __init__(self, **kwargs):
+        super(ExitPopup, self).__init__(**kwargs)
+        content = MDLabel(font_style='Body1',
+                          theme_text_color='Secondary',
+                          text="Are you sure?",
+                          size_hint_y=None,
+                          valign='top')
+        content.bind(texture_size=content.setter('size'))
+        self.dialog = MDDialog(title="Close Application",
+                               content=content,
+                               size_hint=(.3, None),
+                               height=dp(200))
+
+        self.dialog.add_action_button("Close me!",
+                                      action=lambda *x: self.dismiss_callback())
+        self.dialog.open()
+
+    def dismiss_callback(self):
+        self.dialog.dismiss()
+        App.get_running_app().Exit()
 
 #class MDSettingPassword(MDSettingString):    
     #def _create_popup(self, instance):
@@ -586,14 +615,37 @@ class Papiview(App):
         config.setdefaults('global', {
             'connection_type': 'webdav'
         })
+        self.bind(on_start=self.post_build_init)
+
         
 #    def on_config_change(self, config, section, key, value):
 ##        if config is self.config:
 #            print('>>>> %s' % key, value)
 
+    def post_build_init(self, *args):
+        print('post_build1')
+        if platform == 'android':
+            import android
+            #android.map_key(android.KEYCODE_BACK, 1001)
+            print('android is here')
+        win = Window
+        win.bind(on_keyboard=self.key_handler)
     
+    def key_handler(self, window, keycode1, keycode2, text, modifiers):
+        '''
+        Handles keybaord/hardware buttons interactions
+        '''
+        # Escape or android back button
+        if keycode1 in [27, 1001]:
+            self.go_back()
+            return True
+        return False
+
     def get_application_config(self, defaultpath=''):
         return os.path.join(self.user_data_dir,"config.ini")
+
+
+        
         
     def display_settings(self,settings):
         self.root.ids.settings_screen.add_widget(settings)
@@ -640,6 +692,33 @@ class Papiview(App):
 
 
 #
+    def go_back(self):
+        print('go back')
+        print(self.root.ids.tab_panel.ids.tab_manager.current)
+        #print(self.root.ids.tab_panel.tabs)
+        #print(self.root.ids.tab_panel.previous_tab)
+        if self.root.ids.scr_mngr.current == 'library' and self.root.ids.tab_panel.ids.tab_manager.current == 'library':
+            ExitPopup()            
+            #app.Exit()
+        elif self.root.ids.scr_mngr.current == 'library':
+            self.root.ids.lib_tab.on_tab_press()
+        else:
+            self.root.ids.scr_mngr.current = 'library'
+            
+            ## Manually set all button in the menu to not active except the first one
+            ## i.e. go back selecting the library button
+            print(self.root.ids.nav_drawer._list)
+            print(self.root.ids.nav_drawer._list.children)
+            for c in  self.root.ids.nav_drawer._list.children:
+                c._active = True if c.text == 'Library' else False  
+                   
+            #print(self.root.ids.nav_drawer.ids.lib_menu_btn._active)
+            #self.root.ids.lib_menu_btn._active = True
+            #self.root.ids.settings_menu_btn._active = True
+            #self.root.ids.scr_mngr.current = 'library'
+            #self.root.ids.tab_panel.current = 'library'
+            
+
     def select_settings_scr(self):
         self.root.ids.scr_mngr.current = 'settings'
        
