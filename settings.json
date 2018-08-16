@@ -1,0 +1,10 @@
+	[
+    {
+        "type": "mdspinner",
+        "title": "Connection type",
+        "desc": "Connection protocol to connect to remote folders.",
+        "section": "global",
+        "items": "webdav,sftp",
+        "key": "connection_type"
+    }
+]

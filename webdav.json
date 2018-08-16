@@ -1,0 +1,37 @@
+	[
+    {
+        "type": "mdstring",
+        "title": "Host",
+        "desc": "Webdav server address.",
+        "section": "webdav",
+        "key": "host"
+    },
+    {
+        "type": "mdstring",
+        "title": "Username",
+        "desc": "Login for webdav server.",
+        "section": "webdav",
+        "key": "username"
+    },
+    {
+        "type": "mdpassword",
+        "title": "Password",
+        "desc": "Password for webdav server. NO LOCAL ENCRYPTED STORAGE YET.",
+        "section": "webdav",
+        "key": "password"
+    },
+    {
+        "type": "mdbool",
+        "title": "Secure connection (HTTPS)",
+        "desc": "Use HTTPS protocol",
+        "section": "webdav",
+        "key": "https"
+    },
+    {
+        "type": "mdstring",
+        "title": "Remote path",
+        "desc": "Remote path to papis root folder.",
+        "section": "webdav",
+        "key": "path"
+    }
+]
