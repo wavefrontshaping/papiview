@@ -138,7 +138,7 @@ Builder.load_string('''
         MDRaisedButton:
             font_style: 'Subhead'
             theme_text_color: 'Primary'
-            text: u'{0}'.format(root.select_item or '')  
+            text: u'{0}'.format(root.value or '')  
             size_hint_x:0.95
             size_hint: None, None
             size: 4 * dp(48), dp(48)
@@ -201,7 +201,7 @@ class SpinnerOption(MDLabel):
 
 class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
     items =  StringProperty('')   
-    select_item =  StringProperty('<Not set>') 
+    #select_item =  StringProperty('<Not set>') 
     #items = '{0}'.format(values).split(',')
     values = ListProperty()
     
@@ -210,31 +210,27 @@ class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
         #self._dropdown = None
         super(MDSettingSpinner, self).__init__(**kwargs)
         self.values = '{0}'.format(self.items).split(',')
-        self.select_item = self.values[0]
+        self.value = self.values[0]
         #build_dropdown = self._build_dropdown
         #self.ids.con_type.bind(on_release=lambda: self._open())
         #build_dropdown()
 
     def _update(self,value):
-        self.select_item = value
-        if not isinstance(value, string_types):
-            value = str(value)
-        self.panel.set_value(self.section, self.key, value)
+        self.value = value.text
+
     
     def _open(self):
-        #pass        
-
+        print(self.value)
 
         bs = MDListBottomSheet()
-        for value in self.values:
-            bs.add_item(value, lambda x: self._update(x.text))
-        #bs.add_item("Here's an item with an icon", lambda x: x,
-        #        icon='clipboard-account')
-            #bs.add_item("Here's another!", lambda x: x, icon='nfc')
+        for val in self.values:
+            bs.add_item(val, lambda x: self._update(x))
         bs.open()
-        #pass        
-        #self._build_dropdown()  
-        #self.ids.dropdown.open()
+
+
+    def on_value(self,*args):
+        value = self.value.strip()
+        self.panel.set_value(self.section, self.key, value)
 
    #def _build_dropdown(self, *largs):
     #    pass    

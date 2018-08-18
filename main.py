@@ -26,28 +26,33 @@ from kivymd.spinner import MDSpinner
 #from kivymd.date_picker import MDDatePicker
 from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
-from kivymd.list import ILeftBody, ILeftBodyTouch, IRightBodyTouch, BaseListItem
+from kivymd.list import OneLineListItem#ILeftBody, ILeftBodyTouch, IRightBodyTouch, BaseListItem
 from kivymd.material_resources import DEVICE_TYPE
 from kivymd.navigationdrawer import MDNavigationDrawer, NavigationDrawerHeaderBase
 from kivymd.selectioncontrols import MDCheckbox
 #from kivymd.snackbar import Snackbar
-from kivymd.theming import ThemeManager
+#from kivymd.theming import ThemeManager
 #from kivymd.time_picker import MDTimePicker
 from kivymd.progressbar import MDProgressBar 
-import kivymd.list
-import os
+from kivymd.theming import ThemableBehavior, ThemeManager
+#import kivymd.list
+
 from kivy.logger import Logger
 
-#from settings import Settings,SettingsWithNoMenu
 from kivy.uix.settings import SettingsWithSidebar,SettingsWithNoMenu
 from mdsettings import MDSettingString,MDSettingSpinner,MDSettingsWithTabbedPanel,MDSettingsWithSidebar,MDSettingPassword,MDSettingBool,MDSettingsWithSpinner,MDSettingsWithNoMenu
 from kivy.uix.settings import SettingString, SettingItem
 
 from kivymd.backgroundcolorbehavior import (BackgroundColorBehavior,
                                             SpecificBackgroundColorBehavior)
-from kivymd.theming import ThemableBehavior
+
+
+
+from paper_list import PaperListItem
 
 import unidecode
+import re
+import os
 #import threading
 
 
@@ -85,9 +90,6 @@ main_widget_kv = '''
 #:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
 #:import MDTab kivymd.tabs.MDTab
 #:import MDProgressBar kivymd.progressbar.MDProgressBar
-#:import MDAccordion kivymd.accordion.MDAccordion
-#:import MDAccordionItem kivymd.accordion.MDAccordionItem
-#:import MDAccordionSubItem kivymd.accordion.MDAccordionSubItem
 #:import MDThemePicker kivymd.theme_picker.MDThemePicker
 #:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
 #:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
@@ -275,8 +277,6 @@ NavigationLayout:
         screens: root.tabs
         transition: sm.SlideTransition()
 
-<PaperItem>:
-    file_id: 0
     
 <DetailLabel>:
     size_hint_y: None
@@ -339,8 +339,18 @@ NavigationLayout:
     
 
 #<ExitPopup>:
-#    MDLabel:
-#        font_style
+#    MDDialog:
+#        id: dialog
+#        size_hint: (.3,None)
+#        height: dp(200)
+#        MDLabel:
+#            id: content
+#            font_style: 'Body1'
+#            theme_text_color: 'Secondary'
+#            text: root.text
+#            size_hint_y: None
+#            valign: 'top'
+#            texture_size: self.size
 '''
 
 
@@ -349,10 +359,27 @@ def get_info(dic,key,default = ''):
         return u'{0}'.format(clean_text(dic[key])) if key in dic.keys() else default
 
 def clean_text(text):
-    return text.replace('\n',' ').replace('\t',' ')
+       return re.sub(r'\s+',' ',text)
+    #return text.replace('\n',' ').replace('\t',' ')
+
+
+#class ExitPopup(MDDialog):
+#    text = StringProperty('')        
+#    def __init__(self, **kwargs):
+#        super(ExitPopup, self).__init__(**kwargs)
+#        self.text = 'Do you want to quit?'
+#        self.ids.dialog.add_action_button("Close me!",
+#                                      action=lambda *x: self.dismiss_callback())
+#        self.open()
+#
+#    def dismiss_callback(self):
+#        self.dialog.dismiss()
+#        App.get_running_app().Exit()
 
 class ExitPopup(MDDialog):
-
+    
+    text = StringProperty('')    
+    
     def __init__(self, **kwargs):
         super(ExitPopup, self).__init__(**kwargs)
         content = MDLabel(font_style='Body1',
@@ -360,49 +387,25 @@ class ExitPopup(MDDialog):
                           text="Are you sure?",
                           size_hint_y=None,
                           valign='top')
+        self.text = 'Do you want to quit?'
         content.bind(texture_size=content.setter('size'))
         self.dialog = MDDialog(title="Close Application",
                                content=content,
                                size_hint=(.3, None),
                                height=dp(200))
 
-        self.dialog.add_action_button("Close me!",
+        self.dialog.add_action_button("Back",
                                       action=lambda *x: self.dismiss_callback())
+
+        self.dialog.add_action_button("Quit",
+                                      action=lambda *x: self.quit_callback())
         self.dialog.open()
 
     def dismiss_callback(self):
         self.dialog.dismiss()
-        App.get_running_app().Exit()
 
-#class MDSettingPassword(MDSettingString):    
-    #def _create_popup(self, instance):
-		#super(MDSettingPassword, self)._create_popup(instance)
-		#self.textinput.password = True
-    #def add_widget(self, widget, *largs):
-    #    if False:
-    #        pass		
-        #if self.content is None:
-	#	super(MDSettingString, self).add_widget(widget, *largs)
-        #if False:#self.ids.textinputqq:
-        #    pass
-        #return self.content.add_widget(widget, *largs)
-    
-
-#class Spinner(MDSpinner):
-#    def __init__(self,**kwargs):
-#        super(Spinner, self).__init__(**kwargs)
-     
-
-#class SettingPassword(SettingString):
-#	def _create_popup(self, instance):
-#		super(SettingPassword, self)._create_popup(instance)
-#		self.textinput.password = True
-
-#	def add_widget(self, widget, *largs):
-#		if self.content is None:
-#			super(SettingString, self).add_widget(widget, *largs)
-#		if isinstance(widget, PasswordLabel):
- #           return self.content.add_widget(widget, *largs)
+    def quit_callback(self):
+        App.get_running_app().stop()
 
 
 class LoadingDialog(MDDialog):
@@ -411,7 +414,6 @@ class LoadingDialog(MDDialog):
         pass
     def __init__(self,**kwargs):
         super(LoadingDialog, self).__init__(**kwargs)
-#        self.content ='PP'
         self.add_action_button("Cancel", action=lambda x: self.stop())
         
 
@@ -421,7 +423,6 @@ class ProgressDialog(MDDialog):
         pass
     def __init__(self,**kwargs):
         super(ProgressDialog, self).__init__(**kwargs)
-#        self.content ='PP'
         self.add_action_button("Cancel", action=lambda x: self.stop())
         
         
@@ -443,7 +444,7 @@ class DetailSpacer(Widget):
     # Internal class, not documented.
     pass
 
-class ListItem(kivymd.list.OneLineListItem):
+class ListItem(OneLineListItem):
     def refresh_detail(self,ind):
         pass
     def on_release(self):
@@ -537,12 +538,7 @@ class HackedDemoNavDrawer(MDNavigationDrawer):
             self._header_container.add_widget(widget)
         else:
             super(MDNavigationDrawer, self).add_widget(widget, index)
-
-class PaperItem(kivymd.list.ThreeLineListItem):
-    def refresh_detail(self,ind):
-        pass
-    def on_release(self):
-        self.refresh_details(self.file_id)#int(self.id.split('doc_')[1]))
+         
 
 class Papiview(App):
     use_kivy_settings = False
@@ -604,7 +600,7 @@ class Papiview(App):
             'username': '',
             'password': '',
             'path':"",
-            'https':'0'
+            'https':'1'
         })
         config.setdefaults('sftp', {
             'host': '',
@@ -615,7 +611,7 @@ class Papiview(App):
         config.setdefaults('global', {
             'connection_type': 'webdav'
         })
-        self.bind(on_start=self.post_build_init)
+        #self.bind(on_start=self.post_build_init)
 
         
 #    def on_config_change(self, config, section, key, value):
@@ -627,7 +623,6 @@ class Papiview(App):
         if platform == 'android':
             import android
             #android.map_key(android.KEYCODE_BACK, 1001)
-            print('android is here')
         win = Window
         win.bind(on_keyboard=self.key_handler)
     
@@ -728,6 +723,10 @@ class Papiview(App):
         
     def init_loader(self):
         from loader import Loader
+
+        self.loader = Loader(self,root_dir=self.user_data_dir)
+
+    def connect_loader(self):
         protocol = self.config.get('global','connection_type')
         print('connection_type:')
         print(protocol)
@@ -746,10 +745,12 @@ class Papiview(App):
              'password': self.config.get('sftp','password'),
              'path': self.config.get('sftp','path'),
             }
-        self.loader = Loader(self,protocol,options,root_dir=self.user_data_dir)
+        self.loader.connect(protocol,options)
+        
      
     def _load_library(self):
         self.init_loader()
+        self.connect_loader()
         self.refresh_cache()    
         
         
@@ -790,10 +791,13 @@ class Papiview(App):
             second_line = doc['author'].replace('\n',''  )[:160]        
             third_line = doc['journal'] if 'journal' in doc.keys() else ''
             third_line += ' (%s)' % doc['year'] if 'year' in doc.keys() else ''
-            new_item =  PaperItem(file_id = ind,#id = 'doc_'+str(ind),
-		                               text = doc['title'].replace('\n',''  ),
-		                               secondary_text = second_line +   '\n' + third_line)
-            new_item.refresh_details = self.refresh_details
+            new_item =  PaperListItem(file_id = ind,#id = 'doc_'+str(ind),
+		                                text = clean_text(doc['title']),
+                                        secondary_text = clean_text(second_line),
+                                        tertiary_text = clean_text(third_line))
+		                               #secondary_text = second_line +   '\n' + third_line)
+            new_item.bind(on_release=lambda x: self.refresh_details(x.file_id))
+            #new_item.refresh_details = self.refresh_details
             #   self.root.ids.tab_panel.current = 'details_tab'
             #self.root.ids.tab_panel.tab_manager.transition.direction = "right"#self.root.ids.tab_details.on_tab_press()
             self.root.ids.ml.add_widget(new_item)
@@ -863,7 +867,8 @@ class Papiview(App):
         return True
 
     def on_start(self):
-        
+        self.post_build_init()
+        print('?'*55)
         self.open_settings()
 #        test = lambda x: print(x)
         self.root.ids.tab_panel._filter_search = self.filter_doc_list
@@ -873,16 +878,16 @@ class Papiview(App):
         pass
 
 
-class AvatarSampleWidget(ILeftBody, Image):
-    pass
+#class AvatarSampleWidget(ILeftBody, Image):
+#    pass
 
 
-class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
-    pass
+#class IconLeftSampleWidget(ILeftBodyTouch, MDIconButton):
+#    pass
 
 
-class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
-    pass
+#class IconRightSampleWidget(IRightBodyTouch, MDCheckbox):
+#    pass
 
 
 if __name__ == '__main__':

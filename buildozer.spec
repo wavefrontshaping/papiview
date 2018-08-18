@@ -70,7 +70,7 @@ presplash.filename = /home/spopoff/dev/papiview/art/big_logo.png
 #icon.filename = /home/spopoff/dev/KivyMD/kivymd/images/kivymd_logo.png
 icon.filename = /home/spopoff/dev/papiview/art/logo_notext.png 
 # (str) Supported orientation (one of landscape, portrait or all)
-orientation = landscape 
+orientation = all
 #all
 
 # (list) List of service to declare

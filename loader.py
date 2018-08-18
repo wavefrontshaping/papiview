@@ -4,21 +4,21 @@ from papis_utils import Document
 import os,sys,shutil
 from kivy.clock import Clock
 from kivy.logger import Logger
+from kivy.utils import platform
 
 #from kivymd.progressbar import MDProgressBar 
 #from kivymd.dialog import MDDialog
 #from kivy.metrics import dp
 
 #if not sys.platform.startswith('linux'):
-    
-from jnius import cast
-from jnius import autoclass
+if platform == 'android':
+    from jnius import cast
+    from jnius import autoclass
 import urlparse
 import mimetypes
 import webbrowser
 import paramiko
-#import pysftp
-#import OpenSSL
+
 
 connection_types = ['webdav','sftp']
 
@@ -68,18 +68,19 @@ class CopyFoldersIter():
         except Exception,e:
             Logger.exception('Connection error with message: %s.' % str(e))
     
-class Client():
-    def __init__(self,parent,options):
+class Client(object):
+    def __init__(self,parent):
         self.parent_app = parent
-        self.options = options
+        self.options = None
+        self.protocol = None
         self.client = None
-        self.transport = None
         self._ls = None
         self._ls_dir = None
 
 
     def ls_dir(self,path):
         if self.client is not None and self._ls_dir is not None:
+            Logger.info('LOADER: Listing directories in %s' % path)
             try:
                 list_dir = self._ls_dir(path)
                 Logger.info('LOADER: Directory list: %s.' % ' '.join([s for s in list_dir]))
@@ -95,6 +96,7 @@ class Client():
 
     def ls(self,path):
         if self.client is not None and self._ls is not None:
+            Logger.info('LOADER: Listing directory %s' % path)
             try:
                 list_ = self._ls(path)
                 Logger.info('LOADER: Directory list: %s.' % ' '.join([s for s in list_]))
@@ -111,16 +113,29 @@ class Client():
     def download(self,remote_path,local_path):
         pass
 
+    def open_error_dialog(self,error = ''):
+        Logger.exception('Connection error with message: %s.' % str(error))
+        message_err = '\n\nError with %s protocol: %s' % (self.protocol,error) if error else ''
+        self.parent_app.show_error_dialog(
+                    title = 'Connection error',
+                    message = 'Please check your connection and your credentials.%s' % message_err
+            )
 
 
 class SFTP_client(Client):
-    #def __init__(self,*args, **kwargs:
-        #self.transport = None
-        #super(SFTP_client, self).__init__(*args, **kwargs)  
+    def __init__(self,*args, **kwargs):
+        super(SFTP_client, self).__init__(*args, **kwargs)  
+        self.transport = None
+        self.protocol = 'sftp'
+
     def connect(self, options = None):
+        
         if options == None:
             options = self.options
+        else:
+            self.options = options
         try:
+            
             self.transport = paramiko.Transport((options['host'], 22))
             self.transport.connect(username = options['username'], password = options['password'])
             self.client = paramiko.SFTPClient.from_transport(self.transport)
@@ -129,98 +144,87 @@ class SFTP_client(Client):
             print(self.client.listdir())
         except Exception,e:
             self.disconnect()
-            Logger.exception('Connection error with message: %s.' % str(e))
-            self.parent_app.show_error_dialog(
-                    title = 'Connection error',
-                    message = 'Please check your connection and your credentials.\n\nError message: %s' % e
-            )
+            self.open_error_dialog(error = e)
         self._ls = lambda x: self.client.listdir(x)
         self._ls_dir = lambda x: [s for s in self.client.listdir(x) if 'd' in str(self.client.lstat(s)).split()[0]]
-
-#    def ls(self,path):
-#        try:
-#           list_ = self.client.listdir(path)
-#        except Exception,e:
-#           Logger.exception('Connection error with message: %s.' % str(e))
-#           self.parent_app.show_error_dialog(
-#                    title = 'Error retrieving directory list.',
-#                    message = 'Please check your connection and your credentials.\n\nError message: %s' % e
-#           )
-#           return None
-#        return list_
 
     def disconnect(self):
         try:
             self.transport.close()
             self.client.close()
         except Exception,e:
-            self.client = None
-            Logger.exception('Error disconnecting: %s.' % str(e))
+            self.disconnect()
+            self.open_error_dialog(error = e)
         self.transport = None
         self.client = None
         
-        
-        #self.client = pysftp.Connection(self.options['host'],
-        #                                username = self.options['username'],
-        #                                password = self.options['password'])
-    #def ls(self,path):
-     #   return self.client.listdir(path)
-
-    #def ls_dir(self,path):
-    #    print('ls_dir')
-    #    # return list of directories only
-    #    return [s for s in self.client.listdir() if 'd' in str(self.client.lstat(s)).split()[0]]
-
     def download(self,remote_path,local_path):
-        return self.client.get(remote_path, localpath=local_path)
+        try:
+            self.client.get(remote_path, localpath=local_path)
+        except Exception,e:
+            self.disconnect()
+            self.open_error_dialog(error = e)
 
 
 class Webdav_client(Client):
+    def __init__(self,*args, **kwargs):
+        super(Webdav_client, self).__init__(*args, **kwargs)  
+        self.transport = None
+        self.protocol = 'webdav'
+
     def connect(self,options = None):
+        print('go webdav')
+        print(options)
         if options == None:
             options = self.options
+        else:
+            self.options = options
         try:
             self.client = easywebdav.connect(**self.options)     
+            print self.client.ls()
         except Exception,e:
             self.disconnect()
-            Logger.exception('Connection error with message: %s.' % str(e))
-            self.parent_app.show_error_dialog(
-                    title = 'Connection error',
-                    message = 'Please check your connection and your credentials.\n\nError message: %s' % e
-            )
+            self.open_error_dialog(error = e)
         self._ls = lambda x: self.client.ls(x)
         self._ls_dir = lambda x: [os.path.basename(os.path.dirname(f[0])) for f in self.client.ls(x)[1:] if f[0].endswith('/')] 
-    #def ls_dir(self,path):
-    #    list_ = self.client.listdir(path)
-    #    return [os.path.basename(os.path.dirname(f[0])) for f in list_[1:] if f[0].endswith('/')]
-    #def ls(self,path):
-    #    return self.client.ls(path)
+
     def download(self,remote_path,local_path):
-        return self.client.download(remote_path,local_path)      
+        try:
+            self.client.download(remote_path,local_path)    
+        except Exception,e:
+            self.disconnect()
+            self.open_error_dialog(error = e)  
+
+    def disconnect(self):
+        self.client = None
 
 class Loader():
-    def __init__(self,parent_app,protocol,options,root_dir):
+    def __init__(self,parent_app,root_dir):
         self.parent_app = parent_app
-        Logger.info('LOADER: Trying to connect to %s using %s.' % ( options['host'],protocol))
-
-        if protocol == 'webdav':
-            self.client = Webdav_client(parent_app,options)
-        elif protocol == 'sftp':
-            self.client = SFTP_client(parent_app,options)
-        self.client.connect()        
-        #self.client = easywebdav.connect(**webdav_options)
-        #print self.client
-        print(':'*20)
+        self.client = None
         self.abord = False
+        self.protocol = None
         self.cache_folder = os.path.join(root_dir, 'cache')
         if not os.path.exists(self.cache_folder):
-            os.makedirs(self.cache_folder)
-        #print('cache folder: %s'% self.cache_folder)
+            os.makedirs(self.cache_folder) 
+        #self.client = easywebdav.connect(**webdav_options)
+        #print self.client
+
 #        self.libraries = self.get_folders(library="./")
         
-    def connect(self):
-        if self.client.client == None:
-            self.clien.connect()
+    def connect(self,protocol,options):
+        self.protocol = protocol
+        Logger.info('LOADER: Trying to connect to %s using %s.' % ( options['host'],protocol))
+        if self.client is not None:
+            self.client.disconnect()
+        if protocol == 'webdav':
+            self.client = Webdav_client(self.parent_app)
+        elif protocol == 'sftp':
+            self.client = SFTP_client(self.parent_app)
+        self.client.connect(options)   
+        
+
+        #print('cache folder: %s'% self.cache_folder)
         
         
     def get_libraries(self):
@@ -255,15 +259,15 @@ class Loader():
         else:
             Logger.debug("File %s not in the local folder, downloading it." % local_file_path)
             remote_file_path = os.path.join(paper_dir,file_name)
-            try:
-                self.parent_app.open_loading_dialog("Downloading file")
-                self.client.download(remote_file_path,local_file_path)
-            except:
-                self.parent_app.show_error_dialog(
-                       title = 'Connection error',
-                       message = 'Impossible to download the file. Please check your connection.'
-                )
-                return
+#            try:
+            self.parent_app.open_loading_dialog("Downloading file")
+            self.client.download(remote_file_path,local_file_path)
+#            except:
+#                self.parent_app.show_error_dialog(
+#                       title = 'Connection error',
+#                       message = 'Impossible to download the file. Please check your connection.'
+#                )
+#                return
             
         #if sys.platform.startswith('linux'):
         #    pass
@@ -283,30 +287,16 @@ class Loader():
     def get_remote_folders(self,library="./"):
         self.busy = True
         #try:
-        list_ = self.client.ls_dir(library)
-        print('sofarsogoot')
-        
+        list_ = self.client.ls_dir(library)      
         if list_ is None:
             return None
-        #    Logger.info('WEBDAV: Remote folder list successfully retrieved.')
-        #    print(list_)
-        #except Exception,e:
-        #    Logger.exception('Connection error with message: %s.' % str(e))
-        #    self.parent_app.show_error_dialog(
-        #            title = 'Connection error',
-        #            message = 'Please check your connection and your credentials'
-        #    )
-        #    return None
-        #self.folders = [os.path.basename(os.path.dirname(f[0])) for f in list_[1:] if f[0].endswith('/')]
+
         self.folders = list_
         print(self.folders)
         self.busy = False
         return self.folders
     
-#    def get_document_folders(self,library="./"):
-#        folders = self.get_folders() 
-#        return [f for f in folders if self.client.exists(os.path.join(f,"info.yaml"))]
-#    
+   
         
     def load_remote_to_cache(self,dialog,library="./",end_action = lambda: None):
 #        import yaml
