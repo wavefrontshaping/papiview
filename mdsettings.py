@@ -8,24 +8,37 @@ Created on Mon Apr  2 19:46:36 2018
 
 from kivy.metrics import dp
 from kivy.lang import Builder
-from kivy.uix.settings import SettingString,SettingItem,SettingTitle,SettingsPanel,InterfaceWithTabbedPanel,InterfaceWithSidebar,InterfaceWithTabbedPanel,SettingsWithNoMenu,Settings,InterfaceWithNoMenu,InterfaceWithSpinner,ContentPanel
-from kivymd.label import MDLabel
+from kivy.uix.settings import Settings,SettingString,SettingItem,SettingTitle,SettingsPanel
+from kivy.uix.settings import TabbedPanelHeader,InterfaceWithTabbedPanel,InterfaceWithSidebar,InterfaceWithTabbedPanel
+from kivy.uix.settings import SettingsWithNoMenu,InterfaceWithNoMenu,InterfaceWithSpinner,ContentPanel,SettingsPanel
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.spinner import Spinner
 from kivy.properties import ObjectProperty,ListProperty,StringProperty,BooleanProperty
+from kivy.compat import string_types, text_type
+from kivy.uix.dropdown import DropDown
+from kivy.config import ConfigParser
+from kivy.uix.widget import Widget  
+from kivy.app import App
+
+from kivymd.label import MDLabel
 from kivymd.backgroundcolorbehavior import (BackgroundColorBehavior,
                                             SpecificBackgroundColorBehavior)
 from kivymd.theming import ThemableBehavior
-from kivy.uix.spinner import Spinner
-
-from kivy.compat import string_types, text_type
-from kivy.uix.dropdown import DropDown
 from kivymd.bottomsheet import MDListBottomSheet
 from kivymd.button import MDIconButton, MDRaisedButton
 
+import json
 
+#SettingsPanel.__class__.__bases__ += (ThemableBehavior,BackgroundColorBehavior,) 
+#cls = SettingsPanel.__class__
+#SettingsPanel.__class__ = cls.__class__("MD"+cls.__name__, (cls, ThemableBehavior,BackgroundColorBehavior), {})
 
 Builder.load_string('''
 
 <-SettingItem>:
+
     size_hint: .25, None
     height: dp(70)
     content: content
@@ -35,43 +48,48 @@ Builder.load_string('''
         Rectangle:
             pos: self.x, self.y + 1
             size: self.size
-        Color:
-            rgb: .2, .2, .2
-        Rectangle:
-            pos: self.x, self.y - 2
-            size: self.width, 1
+#        Color:
+#            rgb: .2, .2, .2
+#        Rectangle:
+#            pos: self.x, self.y - 2
+#            size: self.width, 1
 
     BoxLayout:
+        
         pos: root.pos[0],root.pos[1]
         id: content      
 
-<-SettingsPanel>:
+<-MDSettingsPanel>:
     spacing: 5
-    padding: dp(24)
+    padding: 5
+    padding: dp(18)
     size_hint_y: None
     height: self.minimum_height
-    md_bg_color: app.theme_cls.primary_color
+    #md_bg_color:  app.theme_cls.main_background_color#.5,.9,.5,1.
+    
 
     MDLabel:
-        
         size_hint_y: None
         text: root.title
         font_style: 'Title'
         theme_text_color: 'Primary'
+        #background_color: (1.,0.,0.,1.)
+        #md_bg_color: app.theme_cls.primary_color
         height: max(50, self.texture_size[1] + 20)
         color: (.9, .9, .9, 1)
-        
-        
 
         canvas.after:
             Color:
-                rgb: .2, .2, .2
+                rgb: .3, .3, .3
             Rectangle:
                 pos: self.x, self.y - 2
-                size: self.width, 1 
+                size: self.width, 1
+
+
  
 <MDSettingBool>:
     BoxLayout:
+        #md_bg_color: app.theme_cls.primary_color
         pos: root.pos
         size: root.width, root.height
         MDLabel:
@@ -79,9 +97,12 @@ Builder.load_string('''
             theme_text_color: 'Primary'
             text: u'{0}'.format(root.title or '')  
             size_hint_x:0.95
+            #on_touch_up: root._open()
         MDCheckbox:
+            id: checkbox
             text: 'Boolean'
-            size_hint_x:0.05
+            width: dp(24)            
+            size_hint_x: 0.1
             id: switch     
             align:  'right'
             pos: root.pos
@@ -94,6 +115,34 @@ Builder.load_string('''
 #            rgb: (1,1,1)
 
 
+<MDSettingSpacer>:
+    size_hint_y: None
+    height: 5
+    canvas:
+        Color:
+            rgb: .3, .3, .3
+        Rectangle:
+            pos: self.x, self.center_y
+            size: self.width, 10
+
+
+<SettingTitle>:
+    text_size: self.width - 32, None
+    size_hint_y: None
+    height: max(dp(20), self.texture_size[1] + dp(20))
+    color: (.9, .9, .9, 1)
+    font_size: '15sp'
+    canvas:
+        Color:
+            rgba: .15, .15, .15, .5
+        Rectangle:
+            pos: self.x, self.y + 2
+            size: self.width, self.height - 2
+        Color:
+            rgb: .2, .2, .2
+        Rectangle:
+            pos: self.x, self.y - 2
+            size: self.width, 1
 
 
 
@@ -135,7 +184,9 @@ Builder.load_string('''
             theme_text_color: 'Primary'
             text: u'{0}'.format(root.title or '')  
             size_hint_x:0.95
+            #on_touch_up: root._open()
         MDRaisedButton:
+            id: btn
             font_style: 'Subhead'
             theme_text_color: 'Primary'
             text: u'{0}'.format(root.value or '')  
@@ -177,11 +228,30 @@ Builder.load_string('''
         width: min(dp(200), 0.4*root.width)
         font_size: '15sp'
 
-<InterfaceWithTabbedPanel>:
-    md_bg_color: app.theme_cls.primary_color
+<MDInterfaceWithNoMenu>:
+    #background_color: (1.,0.,0.,1.)
 
-<SettingsPanel>:
-    md_bg_color: app.theme_cls.primary_color
+<MDInterfaceWithTabbedPanel>:
+    tabbedpanel: tp
+    close_button: button
+    md_bg_color: root.md_bg_color#app.theme_cls.primary_color
+    TabbedPanel:
+        id: tp
+        size: root.size
+        pos: root.pos
+        #do_default_tab: False
+        #background_color: root.md_bg_color#(1,0,0,1)
+    Button:
+        id: button
+        text: 'Close'
+        size_hint: None, None
+        height: '45dp'
+        width: min(dp(200), 0.3*root.width)
+        x: root.x + root.width - self.width
+        y: root.y + root.height - self.height
+
+
+
 
 #self.root.theme_cls.bg_dark
            
@@ -197,7 +267,14 @@ class SpinnerOption(MDLabel):
     '''
     pass
 
-
+class MDSettingsPanel(ThemableBehavior,BackgroundColorBehavior,SettingsPanel):
+    def __init__(self, **kwargs): 
+        #self.md_bg_color = [1.,0.5,0.,1.]
+        #self.background_color = self.md_bg_color
+        super(MDSettingsPanel, self).__init__(**kwargs)
+        print(App.get_running_app().theme_cls.bg_dark)
+        print(self.md_bg_color)
+    #pass
 
 class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
     items =  StringProperty('')   
@@ -323,7 +400,10 @@ class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
 #    
 #    def on_touch_up(self, touch):
 #        pass#self.ids.dropdown.open()
-    
+ 
+class MDSettingSpacer(Widget):
+    # Internal class, not documented.
+    pass   
     
 class MDSettingString(BackgroundColorBehavior,SettingItem):
     def on_touch_down(self, touch):
@@ -368,10 +448,59 @@ class MDSettingPassword(MDSettingString):
    #     self.value = value
         
 class MDSettings(ThemableBehavior,BackgroundColorBehavior,Settings):
-    pass
+    def create_json_panel(self, title, config, filename=None, data=None):
+        '''Create new :class:`SettingsPanel`.
 
-#class MDContentPanel(ThemableBehavior,BackgroundColorBehavior,ContentPanel):
-#    pass
+        .. versionadded:: 1.5.0
+
+        Check the documentation of :meth:`add_json_panel` for more information.
+        '''
+        if filename is None and data is None:
+            raise Exception('You must specify either the filename or data')
+        if filename is not None:
+            with open(filename, 'r') as fd:
+                data = json.loads(fd.read())
+        else:
+            data = json.loads(data)
+        if type(data) != list:
+            raise ValueError('The first element must be a list')
+        panel = MDSettingsPanel(title=title, settings=self, config=config)
+
+        for setting in data:
+            # determine the type and the class to use
+            if 'type' not in setting:
+                raise ValueError('One setting are missing the "type" element')
+            ttype = setting['type']
+            cls = self._types.get(ttype)
+            if cls is None:
+                raise ValueError(
+                    'No class registered to handle the <%s> type' %
+                    setting['type'])
+
+            # create a instance of the class, without the type attribute
+            del setting['type']
+            str_settings = {}
+            for key, item in setting.items():
+                str_settings[str(key)] = item
+#                print str(key)
+#                print item
+
+            instance = cls(panel=panel, **str_settings)
+
+            # instance created, add to the panel
+            panel.add_widget(instance)
+
+        return panel
+    
+    #def __init__(self,*kargs,**kwargs):  
+        #super(MDSettings,self).__init__(*kargs,**kwargs)
+        #print('66'*12)
+        #print(self.md_bg_color)
+        #print(App.get_running_app().theme_cls.primary_color)
+    #pass
+
+class MDContentPanel(ThemableBehavior,BackgroundColorBehavior,ContentPanel):
+    pass
 
 class MDSettingsWithSidebar(MDSettings):
     '''A settings widget that displays settings panels with a sidebar to
@@ -386,7 +515,7 @@ class MDSettingsWithSpinner(MDSettings):
 
     '''
     def __init__(self, *args, **kwargs):
-        self.interface_cls = InterfaceWithSpinner
+        self.interface_cls = MDInterfaceWithSpinner
         super(MDSettingsWithSpinner, self).__init__(*args, **kwargs)
 
 class MDSettingsWithTabbedPanel(MDSettings):
@@ -397,7 +526,7 @@ class MDSettingsWithTabbedPanel(MDSettings):
     __events__ = ('on_close', )
 
     def __init__(self, *args, **kwargs):
-        self.interface_cls = InterfaceWithTabbedPanel
+        self.interface_cls = MDInterfaceWithTabbedPanel
         super(MDSettingsWithTabbedPanel, self).__init__(*args, **kwargs)
 
     def on_close(self, *args):
@@ -421,21 +550,46 @@ class MDSettingsWithNoMenu(MDSettings):
     def __init__(self, *args, **kwargs):
         self.interface_cls = MDInterfaceWithNoMenu
         super(MDSettingsWithNoMenu, self).__init__(*args, **kwargs)
-        
-class MDInterfaceWithNoMenu(ContentPanel):
-    '''The interface widget used by :class:`SettingsWithNoMenu`. It
-    stores and displays a single settings panel.
-
-    This widget is considered internal and is not documented. See the
-    :class:`ContentPanel` for information on defining your own content
-    widget.
-
-    '''
+       
+class MDInterfaceWithNoMenu(MDContentPanel):
     def add_widget(self, widget):
-        if self.container is not None and len(self.container.children) > 0:
-            raise Exception(
-                'ContentNoMenu cannot accept more than one settings panel')
+        print('one added')
+        #if self.container is not None and len(self.container.children) > 0:
+        #    raise Exception(
+        #        'ContentNoMenu cannot accept more than one settings panel')
         super(MDInterfaceWithNoMenu, self).add_widget(widget)
+
+    def add_panel(self, panel, name, uid):
+        if not len(self.container.children) == 0:
+            print('add space '*10 )
+            self.add_widget(MDSettingSpacer())
+        self.add_widget(panel)
+        
+
+
+class MDInterfaceWithTabbedPanel(ThemableBehavior,BackgroundColorBehavior,FloatLayout):
+    tabbedpanel = ObjectProperty()
+    close_button = ObjectProperty()
+
+    __events__ = ('on_close', )
+
+    def __init__(self, *args, **kwargs):
+        super(MDInterfaceWithTabbedPanel, self).__init__(*args, **kwargs)
+        self.close_button.bind(on_release=lambda j: self.dispatch('on_close'))
+        self.background_color = (1.,0.,0.,1.)
+
+    def add_panel(self, panel, name, uid):
+        scrollview = ScrollView()
+        scrollview.add_widget(panel)
+        if not self.tabbedpanel.default_tab_content:
+            self.tabbedpanel.default_tab_text = name
+            self.tabbedpanel.default_tab_content = scrollview
+        else:
+            panelitem = TabbedPanelHeader(text=name, content=scrollview)
+            self.tabbedpanel.add_widget(panelitem)
+
+    def on_close(self, *args):
+        pass
 
 
 #class MDSettingsWithNoMenu(ThemableBehavior,BackgroundColorBehavior,SettingsWithNoMenu):

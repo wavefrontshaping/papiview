@@ -21,7 +21,7 @@ from kivy.utils import platform
 
 
 from kivymd.bottomsheet import MDListBottomSheet, MDGridBottomSheet
-from kivymd.button import MDIconButton, MDRaisedButton
+from kivymd.button import MDIconButton, MDRaisedButton#, BaseRectangularButton, BaseFlatButton, BasePressedButton, BaseRoundButton
 from kivymd.spinner import MDSpinner
 #from kivymd.date_picker import MDDatePicker
 from kivymd.dialog import MDDialog
@@ -113,6 +113,11 @@ NavigationLayout:
             icon: 'settings'
             text: "Settings"
             on_release: app.select_settings_scr()
+        NavigationDrawerIconButton:
+            id: info_menu_btn
+            icon: 'help-circle-outline'
+            text: "Information"
+            on_release: app.root.ids.scr_mngr.current = 'information'
     BoxLayout:
         orientation: 'vertical'
         Toolbar:
@@ -120,11 +125,11 @@ NavigationLayout:
             title: 'Papiview'
             md_bg_color: app.theme_cls.primary_color
             background_palette: 'Primary'
-            background_hue: '500'
+            #background_hue: '500'
             left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
             right_action_items: [['eraser', lambda x: app.clear_cache()],\
                                  ['refresh', lambda x: app.load_library()],\
-                                 ['download', lambda x: x]]
+                                 ['download', lambda x: app.load_offline()]]
         ScreenManager:
             id: scr_mngr
             Screen:
@@ -138,9 +143,11 @@ NavigationLayout:
                         name: 'library'
                         text: "Library" # Why are these not set!!!
                         #icon: "playlist-play"
+                        #md_bg_color: app.theme_cls.bg_dark
                         ScrollView:
                             do_scroll_x: False
                             MDList:
+                                background_color: app.theme_cls.bg_dark
                                 id: ml
                     MDTab:
                         id: details_tab
@@ -149,6 +156,8 @@ NavigationLayout:
                         #icon: "movie"
                         JournalDetails:
                             id: journal_details
+
+
                     
                             
             Screen:
@@ -157,6 +166,20 @@ NavigationLayout:
                 BoxLayout:
                     id:settings_box
                     title: 'Settings'
+
+            Screen:
+                name: 'information'
+                id: information_screen
+                BoxLayout:
+                    id:information_box
+                    title: 'Information'
+                    padding: dp(16)
+                    MDLabel:
+                        id: info_content
+                        font_style: 'Body1'
+                        theme_text_color: 'Primary'
+                        markup: True
+                        text: 'test [color=ff3333]Hello[/color]'
 
 <DetailSpacer>:
     size_hint_y: None
@@ -239,6 +262,7 @@ NavigationLayout:
 
             
 
+
             
 <-MDTabbedPanel>:
     id: panel
@@ -251,7 +275,7 @@ NavigationLayout:
         MDTabBar:
             id: tab_bar
             size_hint_y: None
-            size_hint_x: 0.7
+            size_hint_x: 0.55
             height: panel._tab_display_height[panel.tab_display_mode]
             md_bg_color: panel.tab_color or panel.theme_cls.primary_color
             canvas:
@@ -261,22 +285,44 @@ NavigationLayout:
                 Rectangle:
                     size: (self.width,dp(2))
         MDBoxLayout:   
-            size_hint_x: 0.3
-            md_bg_color: panel.theme_cls.bg_dark
-            TextInput:
+            id: box
+            size_hint_x: 0.45
+            md_bg_color: panel.tab_color or panel.theme_cls.primary_color
+            MDIcon:
+                color: 1,0.,0.,1
+                id: icon_search
+                size_hint_x: None
+                theme_text_color: 'Primary'
+                icon: 'magnify' 
+                width:dp(30)
+                halign: 'right'      
+            MDSearchInput:
+                #size_hint_x: 1
+                width: box.width-icon_search.width
                 id: search_input
                 padding: dp(15)
                 on_text: root._filter_search(self.text)
-                text: ''
-#        MDIconButton:
-#            id: search_btn
-#            icon: 'magnify'
+
+
     ScreenManager:
         id: tab_manager
         current: root.current
         screens: root.tabs
         transition: sm.SlideTransition()
 
+<MDIcon@MDLabel>:
+    icon: 'magnify'
+    font_style: 'Icon'
+    text: u"{}".format(md_icons[self.icon])
+    theme_text_color: root.theme_text_color
+    text_color: root.text_color
+    #disabled: root.disabled
+    valign: 'middle'
+    halign: 'center'
+    #opposite_colors: root.opposite_colors 
+
+
+   
     
 <DetailLabel>:
     size_hint_y: None
@@ -329,28 +375,81 @@ NavigationLayout:
 #		pos: root.pos
 #		font_size: '15sp'
 
-  
+ 
+<MDSearchInput@TextInput>:
+    font_size: '14dp'
+    background_color: app.theme_cls.primary_color
+    #foreground_color: 1,1,1,1
+    background_normal: 'art/textinput.png'
+    background_active: 'art/textinput.png'
+    cursor_color: 1.,0.25,0.5,1.
+    canvas.after:
+        Color:
+            rgba: .8, .8, .8, .7
+        Rectangle:
+            pos: self.x+self.padding[0], self.y+5
+            size: self.width-2*self.padding[0], 2  
+ 
+<SearchInput@TextInput>:
+    font_size: '14dp'
+    background_color: 1,1,1,1
+    foreground_color: 1,1,1,1
+    background_normal: 'art/textinput.png'
+    background_active: 'art/textinput.png'
+    cursor_color: get_color_from_hex('#000000')
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex('#000000')
+    canvas.after:
+        Color:
+            rgb: 1,1,1,1#get_color_from_hex('#0f192e')
+        Ellipse:
+            angle_start:180
+            angle_end:360
+            pos:(self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Ellipse:
+            angle_start:360
+            angle_end:540
+            pos: (self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Color:
+            rgba: get_color_from_hex('#3f92db')
+        Line:
+            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
+        Line:
+            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
+        Line:
+            ellipse: self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 180, 360
+        Line:
+            ellipse: self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 360, 540
 
            
-<MDTextInput@TextInput>
+<MDTextInput@TextInput>:
     canvas:
         Color: 
             rgb: (1,1,1)
     
 
-#<ExitPopup>:
-#    MDDialog:
-#        id: dialog
-#        size_hint: (.3,None)
-#        height: dp(200)
-#        MDLabel:
-#            id: content
-#            font_style: 'Body1'
-#            theme_text_color: 'Secondary'
-#            text: root.text
-#            size_hint_y: None
-#            valign: 'top'
-#            texture_size: self.size
+<MDPopup@MDDialog>:
+    text: ''
+    minimum_width: 1
+    id: popup_dialog
+    size_hint: (.5,None)
+    height: dp(200)
+    #texture_size: content.size
+    MDLabel:
+        id: text
+        size: self.texture_size
+        font_style: 'Body1'
+        theme_text_color: 'Secondary'
+        text: root.text
+        size_hint_y: None
+        valign: 'top'
+        texture_size: self.size
+
+
+        
 '''
 
 
@@ -361,6 +460,9 @@ def get_info(dic,key,default = ''):
 def clean_text(text):
        return re.sub(r'\s+',' ',text)
     #return text.replace('\n',' ').replace('\t',' ')
+
+#class MDIcon(BaseRoundButton, BaseFlatButton, BasePressedButton):
+#    icon = StringProperty('checkbox-blank-circle')
 
 
 #class ExitPopup(MDDialog):
@@ -376,33 +478,52 @@ def clean_text(text):
 #        self.dialog.dismiss()
 #        App.get_running_app().Exit()
 
-class ExitPopup(MDDialog):
-    
-    text = StringProperty('')    
-    
+class MDPopup(MDDialog):
+    pass
+
+class YNPopup(MDPopup):
+    def __init__(self, **kwargs):
+        super(YNPopup, self).__init__(**kwargs)
+        self.add_action_button("No",
+                                      action=lambda *x: self.on_no(x))
+        self.add_action_button("Yes",
+                                      action=lambda *x: self.on_yes(x))
+
+    def _on_yes(self):
+        self.on(yes)
+        self.dismiss()
+
+    def on_yes(self):
+        pass
+
+    def on_no(self,*args):
+        self.dismiss()
+        
+
+class ExitPopup(MDPopup):
     def __init__(self, **kwargs):
         super(ExitPopup, self).__init__(**kwargs)
-        content = MDLabel(font_style='Body1',
-                          theme_text_color='Secondary',
-                          text="Are you sure?",
-                          size_hint_y=None,
-                          valign='top')
+#        content = MDLabel(font_style='Body1',
+#                          theme_text_color='Secondary',
+#                          text="Are you sure?",
+#                          size_hint_y=None,
+#                          valign='top')
+#        
         self.text = 'Do you want to quit?'
-        content.bind(texture_size=content.setter('size'))
-        self.dialog = MDDialog(title="Close Application",
-                               content=content,
-                               size_hint=(.3, None),
-                               height=dp(200))
-
-        self.dialog.add_action_button("Back",
+        #content.bind(texture_size=content.setter('size'))
+#        self.ids.dialog = MDDialog(title="Close Application",
+#                               content=content,
+#                               size_hint=(.3, None),
+#                               height=dp(200))
+        self.title = "Close Application"
+        self.add_action_button("Back",
                                       action=lambda *x: self.dismiss_callback())
-
-        self.dialog.add_action_button("Quit",
+        self.add_action_button("Quit",
                                       action=lambda *x: self.quit_callback())
-        self.dialog.open()
+        self.open()
 
     def dismiss_callback(self):
-        self.dialog.dismiss()
+        self.dismiss()
 
     def quit_callback(self):
         App.get_running_app().stop()
@@ -432,6 +553,10 @@ class DetailLabel(MDLabel):
 
 class MDBoxLayout(ThemableBehavior,BackgroundColorBehavior,BoxLayout):
     pass
+
+class MDFloatLayout(ThemableBehavior,BackgroundColorBehavior,FloatLayout):
+    pass
+
 
 class File(BoxLayout):
     filename = ' '
@@ -464,8 +589,6 @@ class JournalDetails(FloatLayout):
         pass
     
     def updateDetails(self,document,folder): 
-        print(document.keys())
-
         def Doc(key,default=''):
             return get_info(document,key,default = default)
 
@@ -545,8 +668,8 @@ class Papiview(App):
     theme_cls = ThemeManager()
     previous_date = ObjectProperty()
     title = "Papiview"
-    settings_cls = MDSettingsWithTabbedPanel
-    #SettingsWithSidebar
+    settings_cls = MDSettingsWithNoMenu
+    #MDSettingsWithSidebar
     #MDSettingsWithTabbedPanel
     #MDSettingsWithSpinner
     #MDSettingsWithNoMenu
@@ -611,20 +734,15 @@ class Papiview(App):
         config.setdefaults('global', {
             'connection_type': 'webdav'
         })
-        #self.bind(on_start=self.post_build_init)
-
-        
-#    def on_config_change(self, config, section, key, value):
-##        if config is self.config:
-#            print('>>>> %s' % key, value)
 
     def post_build_init(self, *args):
-        print('post_build1')
-        if platform == 'android':
-            import android
+        #if platform == 'android':
+            #import android
             #android.map_key(android.KEYCODE_BACK, 1001)
         win = Window
         win.bind(on_keyboard=self.key_handler)
+        
+        self.load_info()
     
     def key_handler(self, window, keycode1, keycode2, text, modifiers):
         '''
@@ -688,10 +806,6 @@ class Papiview(App):
 
 #
     def go_back(self):
-        print('go back')
-        print(self.root.ids.tab_panel.ids.tab_manager.current)
-        #print(self.root.ids.tab_panel.tabs)
-        #print(self.root.ids.tab_panel.previous_tab)
         if self.root.ids.scr_mngr.current == 'library' and self.root.ids.tab_panel.ids.tab_manager.current == 'library':
             ExitPopup()            
             #app.Exit()
@@ -719,6 +833,10 @@ class Papiview(App):
        
     def save_settings(self):
         self.init_loader()
+
+    def load_info(self):
+        with open('info.md', 'r') as infofile:
+            self.root.ids.info_content.text = infofile.read() 
         
         
     def init_loader(self):
@@ -748,21 +866,32 @@ class Papiview(App):
         self.loader.connect(protocol,options)
         
      
-    def _load_library(self):
+    def _load_library(self,offline):
         self.init_loader()
         self.connect_loader()
-        self.refresh_cache()    
+        self.refresh_cache(download_all=offline)    
+
         
         
-    def load_library(self):
-        Clock.schedule_once(lambda x: self._load_library(),0)
+    def load_library(self,offline=False):
         
-    def refresh_cache(self):
+        Clock.schedule_once(lambda x: self._load_library(offline = offline),0.5)
+
+    def _load_offline(self):
+        popup = YNPopup()
+        popup.text = "Do you want to donwload all the documents for offline use?\nThis may take a while"
+        popup.on_yes = lambda x: self.load_library(offline = True)
+        popup.open()
+
+    def load_offline(self):
+         Clock.schedule_once(lambda x: self._load_offline(),0.5)
+        
+    def refresh_cache(self,download_all=False):
         
         self.open_progress_dialog("Loading library")
         if not self.loader:
             self.init_loader()
-        if not self.loader.load_remote_to_cache(self.progress_dialog,end_action = self.load_library_from_cache):
+        if not self.loader.load_remote_to_cache(self.progress_dialog,end_action = self.load_library_from_cache, download_all=download_all):
             self.loader.abord = True
             self.progress_dialog.dismiss()
         self.doc_list=[]
@@ -777,7 +906,8 @@ class Papiview(App):
     def filter_doc_list(self,search):
         self.filt_doc_list = [doc for doc in self.doc_list if \
                      search.lower() in unidecode.unidecode(doc['title']).lower() \
-                     or search.lower() in unidecode.unidecode(doc['author']).lower()]
+                     or search.lower() in unidecode.unidecode(doc['author']).lower() \
+                     or search.lower() in unidecode.unidecode(doc['year']).lower()]
         self.refresh_list()
 
     def refresh_list(self):

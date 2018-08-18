@@ -43,10 +43,32 @@ webbrowser.register('android', AndroidBrowser, None, -1)
 # 'root': "/remote.php/webdav/Biblio/papers"
 #}
 
-
+class CopyFoldersIter():
+    def __init__(self,folders,local_folder,client,download_all = None):
+        self.client = client
+        self.local_folder = local_folder
+        self.folders_iter = folders.__iter__()
+        self.count = 0
+        self.busy = None
+#        self.current_folder = folders[0]
+    
+#    def __next__(self):
+#        self.count+=1
+#        current_folder = self.folders_iter.next()
+#        yaml_path = os.path.join(current_folder,"info.yaml")
+#        if not os.path.exists(os.path.join(self.local_folder,current_folder)):
+#            os.makedirs(os.path.join(self.local_folder,current_folder))
+#        local_yaml_path = os.path.join(self.local_folder,current_folder,"info.yaml")
+#        print yaml_path
+#        try:
+#            self.client.download(yaml_path,local_yaml_path)
+#            Logger.info('LOADER: Successfully retrieved %s.' % yaml_path)
+#        except Exception,e:
+#            Logger.exception('Connection error with message: %s.' % str(e))
 
 class CopyFoldersIter():
-    def __init__(self,folders,local_folder,client):
+    def __init__(self,folders,local_folder,client,download_all):
+        self.download_all = download_all
         self.client = client
         self.local_folder = local_folder
         self.folders_iter = folders.__iter__()
@@ -57,16 +79,24 @@ class CopyFoldersIter():
     def __next__(self):
         self.count+=1
         current_folder = self.folders_iter.next()
-        yaml_path = os.path.join(current_folder,"info.yaml")
+        if not self.download_all:
+            file_path = [os.path.join(current_folder,"info.yaml")]
+        else:
+            file_path = self.client.ls(os.path.basename(current_folder))
+            print('bite '*10)
+            print(current_folder)
+            print(file_path)
         if not os.path.exists(os.path.join(self.local_folder,current_folder)):
             os.makedirs(os.path.join(self.local_folder,current_folder))
-        local_yaml_path = os.path.join(self.local_folder,current_folder,"info.yaml")
-        print yaml_path
-        try:
-            self.client.download(yaml_path,local_yaml_path)
-            Logger.info('LOADER: Successfully retrieved %s.' % yaml_path)
-        except Exception,e:
-            Logger.exception('Connection error with message: %s.' % str(e))
+
+        for path in file_path:
+            local_path = os.path.join(self.local_folder,current_folder,os.path.basename(path))
+            print local_path
+            try:
+                self.client.download(path,local_path)
+            except Exception,e:
+                Logger.exception('Connection error with message: %s.' % str(e))
+                return
     
 class Client(object):
     def __init__(self,parent):
@@ -140,8 +170,6 @@ class SFTP_client(Client):
             self.transport.connect(username = options['username'], password = options['password'])
             self.client = paramiko.SFTPClient.from_transport(self.transport)
             self.client.chdir(options['path'])
-            print('aaaa'*5)
-            print(self.client.listdir())
         except Exception,e:
             self.disconnect()
             self.open_error_dialog(error = e)
@@ -173,19 +201,16 @@ class Webdav_client(Client):
         self.protocol = 'webdav'
 
     def connect(self,options = None):
-        print('go webdav')
-        print(options)
         if options == None:
             options = self.options
         else:
             self.options = options
         try:
             self.client = easywebdav.connect(**self.options)     
-            print self.client.ls()
         except Exception,e:
             self.disconnect()
             self.open_error_dialog(error = e)
-        self._ls = lambda x: self.client.ls(x)
+        self._ls = lambda x: [os.path.basename(os.path.dirname(f[0])) for f in self.client.ls(x)[1:]]#self.client.ls(x)
         self._ls_dir = lambda x: [os.path.basename(os.path.dirname(f[0])) for f in self.client.ls(x)[1:] if f[0].endswith('/')] 
 
     def download(self,remote_path,local_path):
@@ -292,13 +317,12 @@ class Loader():
             return None
 
         self.folders = list_
-        print(self.folders)
         self.busy = False
         return self.folders
     
    
         
-    def load_remote_to_cache(self,dialog,library="./",end_action = lambda: None):
+    def load_remote_to_cache(self,dialog,library="./",end_action = lambda: None,download_all=False):
 #        import yaml
         self.busy = True
         folders = self.get_remote_folders(library)
@@ -307,7 +331,7 @@ class Loader():
         dialog.ids.progress_bar.max = len(folders)
         local_folder = self.cache_folder
       
-        iter_copy = CopyFoldersIter(folders,local_folder,self.client)
+        iter_copy = CopyFoldersIter(folders,local_folder,self.client,download_all)
          
         def clock_func(dt):
             iter_copy.__next__()
@@ -328,9 +352,6 @@ class Loader():
         self.busy= True
         folder_list = self.get_local_folders()
         self.busy = False
-        print('folder_list')
-        
-        print(folder_list)
         if folder_list is not None:
             return map(Document,folder_list)#,[os.path.basename(folder) for folder in folder_list]
     

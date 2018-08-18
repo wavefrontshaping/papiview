@@ -40,6 +40,8 @@ Builder.load_string('''
             size_hint_y: None
             height: self.texture_size[1]
             shorten: True
+            shorten_from: 'right'
+            strip: True
         MDLabel:
             id: _lbl_secondary
             text: root.secondary_text
@@ -49,6 +51,8 @@ Builder.load_string('''
             size_hint_y: None
             height: self.texture_size[1]
             shorten: True
+            shorten_from: 'right'
+            strip: True
         MDLabel:
             id: _lbl_tertiary
             text: root.tertiary_text
@@ -58,6 +62,8 @@ Builder.load_string('''
             size_hint_y: None
             height: self.texture_size[1]
             shorten: True 
+            shorten_from: 'right'
+            strip: True
 ''')
 
 class PaperListItem(ThemableBehavior, RectangularRippleBehavior,
