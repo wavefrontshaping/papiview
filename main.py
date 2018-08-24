@@ -462,6 +462,9 @@ NavigationLayout:
             font_style: 'Subhead'
             theme_text_color: 'Primary'
             text: root.info
+            shorten: True
+            shorten_from: 'right'
+            padding: 0,dp(16)
 
 #<Spinner>
 #    size_hint: None, None
@@ -781,7 +784,7 @@ class Papiview(App):
         self.dialog = MDDialog(title=title,
                                content=content,
                                size_hint=(.8, None),
-                               height=dp(200),
+                               height=dp(350),
                                auto_dismiss=False)
 
         self.dialog.add_action_button("Dismiss",
@@ -923,28 +926,6 @@ class Papiview(App):
         self.init_loader()
 
     def load_logs(self):
-        #self.root.ids.info_title.text = 'Papiview %s' % str(self.app_version) 
-        
-#        log_dir = Config.get('kivy', 'log_dir')
-#        log_name = Config.get('kivy', 'log_name')
-#        _dir = kivy_home_dir
-#        if log_dir and os.path.isabs(log_dir):
-#            _dir = log_dir
-#        else:
-#            _dir = os.path.join(_dir, log_dir) 
-#        log_path = os.path.join(_dir, log_name)
-
-#        print('log_path '*40)
-#        print(log_path)
-
-#        try: 
-#            with open('log.txt', 'r') as infofile:
-#                self.root.ids.logs_content.text = infofile.read() 
-#        except EnvironmentError:
-#            self.root.ids.logs_content.text = 'Empty'
-#            print(Config.get('kivy', 'log_enable'))
-        
-        print(LoggerHistory.history)
         self.root.ids.logs_content.text = '\n'.join([l.msg for l in LoggerHistory.history])
 
     def load_info(self):

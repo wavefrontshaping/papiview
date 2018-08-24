@@ -87,27 +87,7 @@ Builder.load_string('''
 
 
  
-<MDSettingBool>:
-    BoxLayout:
-        #md_bg_color: app.theme_cls.primary_color
-        pos: root.pos
-        size: root.width, root.height
-        MDLabel:
-            font_style: 'Subhead'
-            theme_text_color: 'Primary'
-            text: u'{0}'.format(root.title or '')  
-            size_hint_x:0.95
-            #on_touch_up: root._open()
-        MDCheckbox:
-            id: checkbox
-            text: 'Boolean'
-            width: dp(24)            
-            size_hint_x: 0.1
-            id: switch     
-            align:  'right'
-            pos: root.pos
-            active: bool(root.values.index(root.value)) if root.value in root.values else False
-            on_active: root.value = root.values[int(args[1])]
+
 
 #<MyMDSpinner@Spinner>:
 #    canvas:
@@ -144,7 +124,27 @@ Builder.load_string('''
             pos: self.x, self.y - 2
             size: self.width, 1
 
-
+<MDSettingBool>:
+    BoxLayout:
+        #md_bg_color: app.theme_cls.primary_color
+        pos: root.pos
+        size: root.width, root.height
+        MDLabel:
+            font_style: 'Subhead'
+            theme_text_color: 'Primary'
+            text: u'{0}'.format(root.title or '')  
+            size_hint_x:0.95
+            #on_touch_up: root._open()
+        MDCheckbox:
+            id: checkbox
+            text: 'Boolean'
+            width: dp(24)            
+            size_hint_x: 0.1   
+            align:  'right'
+            pos: root.pos
+            active: bool(root.values.index(root.value)) if root.value in root.values else False
+            on_touch_up: root._validate()
+            #on_active: root.value = root.values[int(args[1])]  ##DOES NOT WORK, WHY??
 
 <MDSettingString>:
     MDTextField:
@@ -169,7 +169,7 @@ Builder.load_string('''
 #        helper_text:u'{0}'.format(root.desc or '')  
 #        helper_text_mode: "on_focus" 
 #        on_text_validate: 
-#            root._validate()   
+#            root._validate(args[1])  #root.value = root.values[int(args[1])] 
 
 <SpinnerOption>:
     size_hint_y: None
@@ -257,8 +257,7 @@ Builder.load_string('''
            
 ''')
 #     bool(root.values.index(root.value)) if root.value in root.values else False
-class MDSettingBool(SettingItem):
-    values = ListProperty(['0', '1'])
+
 
 class SpinnerOption(MDLabel):
     '''Special button used in the :class:`Spinner` dropdown list. By default,
@@ -403,6 +402,18 @@ class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
 class MDSettingSpacer(Widget):
     # Internal class, not documented.
     pass   
+
+class MDSettingBool(SettingItem):
+    values = ListProperty(['0', '1'])
+    
+    def _validate(self):
+        self.value = self.values[int(self.ids.checkbox.active)] 
+        #print(bool(self.ids.checkbox.active))
+        #self.value = self.values[0] if bool(self.ids.checkbox.active) else self.values[1]
+        value = self.value
+        if not self.section or not self.key:
+            return
+        self.panel.set_value(self.section, self.key, int(value))
     
 class MDSettingString(BackgroundColorBehavior,SettingItem):
     def on_touch_down(self, touch):
