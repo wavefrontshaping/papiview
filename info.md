@@ -1,8 +1,4 @@
 
-
-
-[b]Papiview[/b]
-
 Written by Sebastien M. Popoff
 [ref=https://github.com/wavefrontshaping/papiview][u][b][color=#70a3c9]github.com/wavefrontshaping.net/papiview[/color][/b][/u][/ref].
 
@@ -17,6 +13,6 @@ The document files (mainly pdfs) are not donwloaded. Click on the file name in t
 
 [b]Ownclaoud connection[/b]
 To connect to a remote library located on an Owncloud server, the webdav configuration shoud look like:
-- [b][color=#70a3c9]Host:[/color][/b] test.com
-- [b][color=#70a3c9]Remote path:[/color][/b] remote.php/webdav/Biblio_folder/library_folder
+- [b][color=#70a3c9]Host: [/color][/b] test.com
+- [b][color=#70a3c9]Remote path: [/color][/b]remote.php/webdav/Biblio_folder/library_folder
 

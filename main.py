@@ -1,7 +1,26 @@
 # -*- coding: utf-8 -*-
+
+
+
 from __future__ import print_function
 
+
+
+from kivy.config import ConfigParser, Config
+Config.set('kivy','log_dir', 'logs')
+Config.set('kivy','log_name', 'kivy_%y-%m-%d_%_.txt')
+#Config.setdefaults('kivy', {
+#            'log_enable': 1,
+#            'log_level': 'info',
+#            'log_dir':'./',
+#            'log_name':'log',
+#})
+
 from kivy.app import App
+__version__ = '0.1.2'
+
+from kivy import kivy_home_dir
+
 from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.properties import ObjectProperty, StringProperty
@@ -12,12 +31,13 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.widget import Widget
 #from kivy.uix.settings import Settings
 #,ContentPanel
-from kivy.config import ConfigParser
+
 from kivy.resources import resource_add_path
 from kivymd.card import MDSeparator
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.utils import platform
+
 
 
 from kivymd.bottomsheet import MDListBottomSheet, MDGridBottomSheet
@@ -37,7 +57,7 @@ from kivymd.progressbar import MDProgressBar
 from kivymd.theming import ThemableBehavior, ThemeManager
 #import kivymd.list
 
-from kivy.logger import Logger
+from kivy.logger import Logger, LoggerHistory
 
 from kivy.uix.settings import SettingsWithSidebar,SettingsWithNoMenu
 from mdsettings import MDSettingString,MDSettingSpinner,MDSettingsWithTabbedPanel,MDSettingsWithSidebar,MDSettingPassword,MDSettingBool,MDSettingsWithSpinner,MDSettingsWithNoMenu
@@ -121,6 +141,13 @@ NavigationLayout:
             icon: 'help-circle-outline'
             text: "Information"
             on_release: app.root.ids.scr_mngr.current = 'information'
+        NavigationDrawerIconButton:
+            id: logs_menu_btn
+            icon: 'code-brackets'#'developer-board'
+            text: "Logs"
+            on_release: app.root.ids.scr_mngr.current = 'logs'
+
+
     BoxLayout:
         orientation: 'vertical'
         Toolbar:
@@ -174,21 +201,83 @@ NavigationLayout:
                 name: 'information'
                 id: information_screen
                 ScrollView:
-                    BoxLayout:
+                    GridLayout:
                         id:information_box
                         title: 'Information'
+                        cols: 1
+                        size_hint: 1.,None    
+                        height: self.minimum_height                  
                         padding: dp(16)
                         MDLabel:
+                            id: info_title
+                            size_hint: 1.,None 
+                            height: self.texture_size[1]
+                            theme_text_color: 'Primary'
+                            text: self.parent.title
+                            font_style: 'Title'
+                            padding: 0,dp(4)
+                        MDLabel:
+                            size_hint: 1.,None 
+                            height: self.texture_size[1]
                             id: info_content
                             font_style: 'Subhead'#'Body1'
                             theme_text_color: 'Primary'
                             markup: True
+                            halign: 'justify'
+                            padding: 0,dp(4)
                             text: 'test [color=ff3333]Hello[/color]'
                             on_ref_press:
                                 from android_interactions import open_url
                                 #import webbrowser
                                 open_url(args[1])
                                 #webbrowser.open(args[1])
+
+            Screen:
+                name: 'logs'
+                id: logs_screen
+                GridLayout:
+                    cols: 1
+                    padding: dp(16)
+                    ScrollView:
+                        GridLayout:
+                            id:information_box
+                            title: 'Logs'
+                            cols: 1
+                            size_hint: 1.,None    
+                            height: self.minimum_height                  
+                            
+                            MDLabel:
+                                #id: logs_title
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                theme_text_color: 'Primary'
+                                text: self.parent.title
+                                font_style: 'Title'
+                                padding: 0,dp(4)
+                            MDLabel:
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                id: logs_content
+                                font_style: 'Subhead'#'Body1'
+                                theme_text_color: 'Primary'
+                                markup: True
+    #                            shorten: True 
+    #                            shorten_from: 'right'
+                                text: 'test [color=ff3333]Hello[/color]'   
+                                padding: 0,dp(4) 
+                    AnchorLayout:
+                        #cols: 1
+                        anchor_x: 'center'
+                        anchor_y: 'center'
+                        size_hint: 1,None
+                        height: dp(54)
+                        MDRaisedButton:
+                            #size_hint: None,None
+                            padding: dp(16)
+                            text: 'Refresh'
+                            on_release:
+                                app.load_logs()
+
         
 <DetailSpacer>:
     size_hint_y: None
@@ -674,6 +763,7 @@ class Papiview(App):
     previous_date = ObjectProperty()
     title = "Papiview"
     settings_cls = MDSettingsWithNoMenu
+    app_version = StringProperty(__version__)
     #MDSettingsWithSidebar
     #MDSettingsWithTabbedPanel
     #MDSettingsWithSpinner
@@ -720,10 +810,6 @@ class Papiview(App):
 
     def build_config(self, config):
 #        SettingBoolean(values=['1','2'])
-        config.setdefaults('kivy', {
-            'log_enable': 1,
-            'log_level': 'info'
-        })
         config.setdefaults('webdav', {
             'host': '',
             'username': '',
@@ -749,6 +835,7 @@ class Papiview(App):
         win.bind(on_keyboard=self.key_handler)
         
         self.load_info()
+        self.load_logs()
     
     def key_handler(self, window, keycode1, keycode2, text, modifiers):
         '''
@@ -835,7 +922,33 @@ class Papiview(App):
     def save_settings(self):
         self.init_loader()
 
+    def load_logs(self):
+        #self.root.ids.info_title.text = 'Papiview %s' % str(self.app_version) 
+        
+#        log_dir = Config.get('kivy', 'log_dir')
+#        log_name = Config.get('kivy', 'log_name')
+#        _dir = kivy_home_dir
+#        if log_dir and os.path.isabs(log_dir):
+#            _dir = log_dir
+#        else:
+#            _dir = os.path.join(_dir, log_dir) 
+#        log_path = os.path.join(_dir, log_name)
+
+#        print('log_path '*40)
+#        print(log_path)
+
+#        try: 
+#            with open('log.txt', 'r') as infofile:
+#                self.root.ids.logs_content.text = infofile.read() 
+#        except EnvironmentError:
+#            self.root.ids.logs_content.text = 'Empty'
+#            print(Config.get('kivy', 'log_enable'))
+        
+        print(LoggerHistory.history)
+        self.root.ids.logs_content.text = '\n'.join([l.msg for l in LoggerHistory.history])
+
     def load_info(self):
+        self.root.ids.info_title.text = 'Papiview %s' % str(self.app_version)
         with open('info.md', 'r') as infofile:
             self.root.ids.info_content.text = infofile.read() 
         

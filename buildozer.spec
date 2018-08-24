@@ -28,11 +28,11 @@ source.exclude_dirs = bin,art
 source.exclude_patterns = buildozer.spec,tests/*,log
 
 # (str) Application versioning (method 1)
-version = 0.1.1
+#version = 0.1.1
 
 # (str) Application versioning (method 2)
-#version.regex = __version__ = ['\"]([^'\"]*)['\"]
-#version.filename = /home/spopoff/dev/KivyMD/kivymd/__init__.py 
+version.regex = __version__ = ['\"]([^'\"]*)['\"]
+version.filename = ./main.py 
 #%(source.dir)s/../../kivymd/__init__.py
 
 # (list) Application requirements
