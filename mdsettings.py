@@ -268,13 +268,14 @@ class SpinnerOption(MDLabel):
     pass
 
 class MDSettingsPanel(ThemableBehavior,BackgroundColorBehavior,SettingsPanel):
-    def __init__(self, **kwargs): 
-        #self.md_bg_color = [1.,0.5,0.,1.]
-        #self.background_color = self.md_bg_color
-        super(MDSettingsPanel, self).__init__(**kwargs)
-        print(App.get_running_app().theme_cls.bg_dark)
-        print(self.md_bg_color)
-    #pass
+    pass
+#    def __init__(self, **kwargs): 
+#        #self.md_bg_color = [1.,0.5,0.,1.]
+#        #self.background_color = self.md_bg_color
+#        super(MDSettingsPanel, self).__init__(**kwargs)
+#        print(App.get_running_app().theme_cls.bg_dark)
+#        print(self.md_bg_color)
+#    #pass
 
 class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
     items =  StringProperty('')   
@@ -297,8 +298,6 @@ class MDSettingSpinner(BackgroundColorBehavior,SettingItem):
 
     
     def _open(self):
-        print(self.value)
-
         bs = MDListBottomSheet()
         for val in self.values:
             bs.add_item(val, lambda x: self._update(x))
@@ -553,7 +552,6 @@ class MDSettingsWithNoMenu(MDSettings):
        
 class MDInterfaceWithNoMenu(MDContentPanel):
     def add_widget(self, widget):
-        print('one added')
         #if self.container is not None and len(self.container.children) > 0:
         #    raise Exception(
         #        'ContentNoMenu cannot accept more than one settings panel')
@@ -561,7 +559,6 @@ class MDInterfaceWithNoMenu(MDContentPanel):
 
     def add_panel(self, panel, name, uid):
         if not len(self.container.children) == 0:
-            print('add space '*10 )
             self.add_widget(MDSettingSpacer())
         self.add_widget(panel)
         
@@ -576,8 +573,7 @@ class MDInterfaceWithTabbedPanel(ThemableBehavior,BackgroundColorBehavior,FloatL
     def __init__(self, *args, **kwargs):
         super(MDInterfaceWithTabbedPanel, self).__init__(*args, **kwargs)
         self.close_button.bind(on_release=lambda j: self.dispatch('on_close'))
-        self.background_color = (1.,0.,0.,1.)
-
+        
     def add_panel(self, panel, name, uid):
         scrollview = ScrollView()
         scrollview.add_widget(panel)

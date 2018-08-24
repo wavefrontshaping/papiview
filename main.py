@@ -50,9 +50,12 @@ from kivymd.backgroundcolorbehavior import (BackgroundColorBehavior,
 
 from paper_list import PaperListItem
 
+
 import unidecode
 import re
 import os
+
+
 #import threading
 
 
@@ -170,17 +173,23 @@ NavigationLayout:
             Screen:
                 name: 'information'
                 id: information_screen
-                BoxLayout:
-                    id:information_box
-                    title: 'Information'
-                    padding: dp(16)
-                    MDLabel:
-                        id: info_content
-                        font_style: 'Body1'
-                        theme_text_color: 'Primary'
-                        markup: True
-                        text: 'test [color=ff3333]Hello[/color]'
-
+                ScrollView:
+                    BoxLayout:
+                        id:information_box
+                        title: 'Information'
+                        padding: dp(16)
+                        MDLabel:
+                            id: info_content
+                            font_style: 'Subhead'#'Body1'
+                            theme_text_color: 'Primary'
+                            markup: True
+                            text: 'test [color=ff3333]Hello[/color]'
+                            on_ref_press:
+                                from android_interactions import open_url
+                                #import webbrowser
+                                open_url(args[1])
+                                #webbrowser.open(args[1])
+        
 <DetailSpacer>:
     size_hint_y: None
     height: 20
@@ -270,12 +279,14 @@ NavigationLayout:
     BoxLayout:
         id: scroll_view
         size_hint_y: None
+        #height: dp(48)
         height: panel._tab_display_height[panel.tab_display_mode]
         
         MDTabBar:
             id: tab_bar
             size_hint_y: None
             size_hint_x: 0.55
+            #height: root.height
             height: panel._tab_display_height[panel.tab_display_mode]
             md_bg_color: panel.tab_color or panel.theme_cls.primary_color
             canvas:
@@ -300,7 +311,7 @@ NavigationLayout:
                 #size_hint_x: 1
                 width: box.width-icon_search.width
                 id: search_input
-                padding: dp(15)
+                padding: dp(12)#dp(15)
                 on_text: root._filter_search(self.text)
 
 
@@ -333,7 +344,7 @@ NavigationLayout:
     
 <ProgressDialog>:
     size_hint: (.8, None)
-    height: dp(200)
+    height: dp(250)
     auto_dismiss: True
     GridLayout:
         size_hint_y: None
@@ -377,9 +388,9 @@ NavigationLayout:
 
  
 <MDSearchInput@TextInput>:
-    font_size: '14dp'
+    font_size: '15dp'
     background_color: app.theme_cls.primary_color
-    #foreground_color: 1,1,1,1
+    foreground_color: 1,1,1,1
     background_normal: 'art/textinput.png'
     background_active: 'art/textinput.png'
     cursor_color: 1.,0.25,0.5,1.
@@ -387,8 +398,8 @@ NavigationLayout:
         Color:
             rgba: .8, .8, .8, .7
         Rectangle:
-            pos: self.x+self.padding[0], self.y+5
-            size: self.width-2*self.padding[0], 2  
+            pos: self.x+self.padding[0], self.y+9
+            size: self.width-2*self.padding[0], 2.5  
  
 <SearchInput@TextInput>:
     font_size: '14dp'
@@ -433,9 +444,11 @@ NavigationLayout:
 
 <MDPopup@MDDialog>:
     text: ''
-    minimum_width: 1
+    minimum_width: dp(350)
     id: popup_dialog
-    size_hint: (.5,None)
+    size_hint: (None,None)
+    #width: self._action_area.width #+ dp(00)
+    #width: dp(184)
     height: dp(200)
     #texture_size: content.size
     MDLabel:
@@ -501,25 +514,17 @@ class YNPopup(MDPopup):
         
 
 class ExitPopup(MDPopup):
+
     def __init__(self, **kwargs):
         super(ExitPopup, self).__init__(**kwargs)
-#        content = MDLabel(font_style='Body1',
-#                          theme_text_color='Secondary',
-#                          text="Are you sure?",
-#                          size_hint_y=None,
-#                          valign='top')
-#        
         self.text = 'Do you want to quit?'
-        #content.bind(texture_size=content.setter('size'))
-#        self.ids.dialog = MDDialog(title="Close Application",
-#                               content=content,
-#                               size_hint=(.3, None),
-#                               height=dp(200))
         self.title = "Close Application"
         self.add_action_button("Back",
-                                      action=lambda *x: self.dismiss_callback())
+                               action=lambda *x: self.dismiss_callback())
         self.add_action_button("Quit",
-                                      action=lambda *x: self.quit_callback())
+                               action=lambda *x: self.quit_callback())
+        self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+dp(100)))
+
         self.open()
 
     def dismiss_callback(self):
@@ -705,6 +710,7 @@ class Papiview(App):
         self.doc_list = []
 #        self.dir_list = []
         self.loader = None
+        self.progress_dialog = None
         list
         
         
@@ -790,7 +796,7 @@ class Papiview(App):
         selected document.
         '''
         document = self.filt_doc_list[ind]
-        print(document.keys())
+        #print(document.keys())
         folder = document.get_main_folder_name()
 
         #folder = self.dir_list[ind]
@@ -798,12 +804,15 @@ class Papiview(App):
         self.root.ids.details_tab.on_tab_press()
         # clear previous details
 #        self.root.ids.details_tab.clear_widgets()
-        self.root.ids.journal_details.openFile = lambda x,y: Clock.schedule_once(lambda z: self.loader.open_file(x,y),1.)
+        self.root.ids.journal_details.openFile = lambda x,y: Clock.schedule_once(lambda z: self.open_file(x,y),1.)
+        #self.root.ids.journal_details.openFile = lambda x,y: Clock.schedule_once(lambda z: self.loader.open_file(x,y),1.)
         self.root.ids.journal_details.openUrl = lambda x: Clock.schedule_once(lambda z: self.loader.open_url(x),1.)
         self.root.ids.journal_details.updateDetails(document,folder)
 # 
 
-
+    def open_file(self,paper_dir,file_name):
+        self.connect_loader()
+        self.loader.open_file(paper_dir,file_name)
 #
     def go_back(self):
         if self.root.ids.scr_mngr.current == 'library' and self.root.ids.tab_panel.ids.tab_manager.current == 'library':
@@ -816,17 +825,9 @@ class Papiview(App):
             
             ## Manually set all button in the menu to not active except the first one
             ## i.e. go back selecting the library button
-            print(self.root.ids.nav_drawer._list)
-            print(self.root.ids.nav_drawer._list.children)
             for c in  self.root.ids.nav_drawer._list.children:
                 c._active = True if c.text == 'Library' else False  
-                   
-            #print(self.root.ids.nav_drawer.ids.lib_menu_btn._active)
-            #self.root.ids.lib_menu_btn._active = True
-            #self.root.ids.settings_menu_btn._active = True
-            #self.root.ids.scr_mngr.current = 'library'
-            #self.root.ids.tab_panel.current = 'library'
-            
+ 
 
     def select_settings_scr(self):
         self.root.ids.scr_mngr.current = 'settings'
@@ -846,8 +847,6 @@ class Papiview(App):
 
     def connect_loader(self):
         protocol = self.config.get('global','connection_type')
-        print('connection_type:')
-        print(protocol)
         if protocol == 'webdav':
             options = {
              'host': self.config.get('webdav','host'),
@@ -881,10 +880,22 @@ class Papiview(App):
         popup = YNPopup()
         popup.text = "Do you want to donwload all the documents for offline use?\nThis may take a while"
         popup.on_yes = lambda x: self.load_library(offline = True)
+        #popup.on_yes = lambda x: self.download_all_documents()
         popup.open()
 
     def load_offline(self):
-         Clock.schedule_once(lambda x: self._load_offline(),0.5)
+        Clock.schedule_once(lambda x: self._load_offline(),0.5)
+
+    def download_all_documents(self):
+        self.connect_loader()
+        for doc in self.doc_list:
+            paper_dir = doc.get_main_folder_name()
+            if 'files' in doc.keys():              
+                file_list = doc['files']
+                for file_name in file_list:
+                    self.loader.download_file(paper_dir,file_name)
+                    
+        
         
     def refresh_cache(self,download_all=False):
         
@@ -916,7 +927,6 @@ class Papiview(App):
 
 #        for child in [child for child in self.root.ids.ml.children]:
 #            self.root.ids.ml.remove_widget(child)
-        print(self.filt_doc_list)
         for ind,doc in enumerate(self.filt_doc_list):
             second_line = doc['author'].replace('\n',''  )[:160]        
             third_line = doc['journal'] if 'journal' in doc.keys() else ''
@@ -984,7 +994,9 @@ class Papiview(App):
         self.progress_dialog = ProgressDialog(title=title)
         self.progress_dialog.stop = stop
         self.progress_dialog.open()
-
+    
+    def open_text_link(self,x):
+        print(x)
  
       
     def set_error_message(self, *args):
@@ -998,9 +1010,7 @@ class Papiview(App):
 
     def on_start(self):
         self.post_build_init()
-        print('?'*55)
         self.open_settings()
-#        test = lambda x: print(x)
         self.root.ids.tab_panel._filter_search = self.filter_doc_list
         self.load_library_from_cache()
 

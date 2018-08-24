@@ -13,10 +13,10 @@ package.domain = org.papis.papiview
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = py,png,jpg,kv,atlas,json
+source.include_exts = md,py,png,jpg,kv,atlas,json
 
 # (list) List of inclusions using pattern matching
-#source.include_patterns = assets/*,images/*.png
+#source.include_patterns = *.md#assets/*,images/*.png
 
 # (list) Source files to exclude (let empty to not exclude anything)
 #source.exclude_exts = spec
@@ -25,10 +25,10 @@ source.include_exts = py,png,jpg,kv,atlas,json
 source.exclude_dirs = bin,art
 
 # (list) List of exclusions using pattern matching
-source.exclude_patterns = buildozer.spec
+source.exclude_patterns = buildozer.spec,tests/*,log
 
 # (str) Application versioning (method 1)
-version = 0.1
+version = 0.1.1
 
 # (str) Application versioning (method 2)
 #version.regex = __version__ = ['\"]([^'\"]*)['\"]
