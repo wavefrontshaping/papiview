@@ -174,6 +174,7 @@ NavigationLayout:
                         text: "Library" # Why are these not set!!!
                         #icon: "playlist-play"
                         #md_bg_color: app.theme_cls.bg_dark
+                        #on_tab_touch_down: app.load_library_from_cache # does not work, why?
                         ScrollView:
                             do_scroll_x: False
                             MDList:
@@ -541,7 +542,8 @@ NavigationLayout:
     size_hint: (None,None)
     #width: self._action_area.width #+ dp(00)
     #width: dp(184)
-    height: dp(200)
+    height: dp(220)
+    pos_hint: {'center_x': .5, 'center_y': .5}
     #texture_size: content.size
     MDLabel:
         id: text
@@ -593,7 +595,7 @@ class YNPopup(MDPopup):
                                       action=lambda *x: self.on_no(x))
         self.add_action_button("Yes",
                                       action=lambda *x: self.on_yes(x))
-
+        self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+dp(100)))
     def _on_yes(self):
         self.on(yes)
         self.dismiss()
@@ -827,7 +829,9 @@ class Papiview(App):
             'path':"",
         })
         config.setdefaults('global', {
-            'connection_type': 'webdav'
+            'connection_type': 'webdav',
+            'max_dl_thread': '5',
+            'max_dl_retries': '3'
         })
 
     def post_build_init(self, *args):
@@ -906,7 +910,9 @@ class Papiview(App):
 #
     def go_back(self):
         if self.root.ids.scr_mngr.current == 'library' and self.root.ids.tab_panel.ids.tab_manager.current == 'library':
-            ExitPopup()            
+            ExitPopup()         
+#            exit_popup.bind() 
+#self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+dp(100)))
             #app.Exit()
         elif self.root.ids.scr_mngr.current == 'library':
             self.root.ids.lib_tab.on_tab_press()
@@ -972,6 +978,7 @@ class Papiview(App):
 
     def _load_offline(self):
         popup = YNPopup()
+        popup.title = 'Offline download'
         popup.text = "Do you want to donwload all the documents for offline use?\nThis may take a while"
         popup.on_yes = lambda x: self.load_library(offline = True)
         #popup.on_yes = lambda x: self.download_all_documents()
@@ -996,7 +1003,12 @@ class Papiview(App):
         self.open_progress_dialog("Loading library")
         if not self.loader:
             self.init_loader()
-        if not self.loader.load_remote_to_cache(self.progress_dialog,end_action = self.load_library_from_cache, download_all=download_all):
+        ret = self.loader.load_remote_to_cache(self.progress_dialog,
+                                                end_action = self.load_library_from_cache,
+                                                download_all=download_all,
+                                                thread_count = self.config.getint('global','max_dl_thread'),
+                                                max_tries = self.config.getint('global', 'max_dl_retries'))
+        if not ret:
             self.loader.abord = True
             self.progress_dialog.dismiss()
         self.doc_list=[]
@@ -1080,6 +1092,7 @@ class Papiview(App):
 #                               auto_dismiss=True)
 #        
         def stop():
+            print('clicl '*150)
             self.loader.abord = True
             self.progress_dialog.dismiss()
 #
