@@ -1,0 +1,1087 @@
+#:import Toolbar kivymd.toolbar.Toolbar
+#:import ThemeManager kivymd.theming.ThemeManager
+#:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
+#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
+#:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
+#:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
+#:import NavigationDrawerSubheader kivymd.navigationdrawer.NavigationDrawerSubheader
+#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
+#:import MDSwitch kivymd.selectioncontrols.MDSwitch
+#:import MDList kivymd.list.MDList
+#:import OneLineListItem kivymd.list.OneLineListItem
+#:import TwoLineListItem kivymd.list.TwoLineListItem
+#:import ThreeLineListItem kivymd.list.ThreeLineListItem
+#:import OneLineAvatarListItem kivymd.list.OneLineAvatarListItem
+#:import OneLineIconListItem kivymd.list.OneLineIconListItem
+#:import OneLineAvatarIconListItem kivymd.list.OneLineAvatarIconListItem
+#:import MDTextField kivymd.textfields.MDTextField
+#:import MDSpinner kivymd.spinner.MDSpinner
+#:import MDCard kivymd.card.MDCard
+#:import MDSeparator kivymd.card.MDSeparator
+#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import colors kivymd.color_definitions.colors
+#:import SmartTile kivymd.grid.SmartTile
+#:import MDSlider kivymd.slider.MDSlider
+#:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
+#:import MDTab kivymd.tabs.MDTab
+
+#:import MDThemePicker kivymd.theme_picker.MDThemePicker
+#:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
+#:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
+#:import Settings kivy.uix.settings
+##:import SettingsString kivy.uix.settings.SettingsString
+##:import SettingsItem kivy.uix.settings.SettingsItem 
+
+#:import NoTransition kivy.uix.screenmanager.NoTransition
+#:import SlideTransition kivy.uix.screenmanager
+
+GridLayout:
+    cols: 1
+    #orientation: 'vertical'
+    PapToolbar:
+        id: toolbar
+        title: 'Papiview ereader'
+        left_action_items: [['menu_btn','menu', lambda x: self.open_menu()]]  
+        right_action_items: 
+            [['back_btn','arrow-left-bold', lambda x: app.go_back()],\
+            ['search_btn','magnify', lambda x: self.open_search()],\
+            ['color_btn','format-paint', lambda x: app.bwtheme_cls.flip_colors()],\
+            ['clear_cache_btn','eraser', lambda x: app.clear_cache()],\
+            ['refresh_cache_btn','refresh', lambda x: app.load_library()],\
+            ['download_all_btn','download', lambda x: app.load_offline()]] 
+    FloatLayout:
+        ScreenManager:
+            id: scr_mngr
+            transition: NoTransition()
+            canvas:
+                Color: 
+                    rgba: app.bwtheme_cls.background_color
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            Screen:
+                name: 'library'
+
+                #id: lib_tab
+                name: 'library'
+                pos_hint: {'x': 0, 'y': 0}
+                text: "Library" # Why are these not set!!!
+                #icon: "playlist-play"
+                #md_bg_color: app.bwtheme_cls.bg_dark
+                #on_tab_touch_down: app.load_library_from_cache # does not work, why?
+                FloatLayout:
+                    ButtonScrollList:
+                        id: article_list
+
+
+
+                    
+            Screen:
+                id: details_tab
+                name: 'details'
+                pos_hint: {'x': 0, 'y': 0}
+                #text: 'Details'
+                #icon: "movie"
+                JournalDetails:
+                    id: journal_details
+
+
+
+                    
+                            
+            Screen:
+                name: 'settings'
+                id: settings_screen
+                pos_hint: {'x': 0, 'y': 0}
+                
+            Screen:
+                pos_hint: {'x': 0, 'y': 0}
+                size: root.size
+                name: 'information'
+                id: information_screen
+                BoxLayout:
+                    pos_hint: {'x': 0, 'y': 0}
+                    orientation: 'vertical'
+                    #cols: 1
+                    padding: dp(4)
+                    ScrollView:
+                        GridLayout:
+                            id:information_box
+                            title: 'Information'
+                            cols: 1
+                            size_hint: 1.,None    
+                            height: self.minimum_height                  
+                            padding: dp(8)
+                            BWLabel:
+                                id: info_title
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                text_size: self.width, None
+                                #theme_text_color: 'Primary'
+                                text: self.parent.title
+                                font_style: 'Title'
+                                padding: 0,dp(4)
+                            BWLabel:
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                text_size: self.width, None
+                                id: info_content
+                                #font_style: 'Subhead'#'Body1'
+                                #theme_text_color: 'Primary'
+                                markup: True
+                                halign: 'justify'
+                                padding: 0,dp(4)
+                                text: 'test [color=ff3333]Hello[/color]'
+                                on_ref_press:
+                                    from android_interactions import open_url
+                                    #import webbrowser
+                                    open_url(args[1])
+                                    #webbrowser.open(args[1])
+
+            Screen:
+                name: 'logs'
+                id: logs_screen
+                pos_hint: {'x': 0, 'y': 0}
+                GridLayout:
+                    pos_hint: {'x': 0, 'y': 0}
+                    cols: 1
+                    padding: dp(8)
+                    ScrollView:
+                        GridLayout:
+                            id:information_box
+                            title: 'Logs'
+                            cols: 1
+                            size_hint: 1.,None    
+                            height: self.minimum_height                  
+                            
+                            BWLabel:
+                                #id: logs_title
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                text_size: self.width, None
+                                text: self.parent.title
+                                font_style: 'Title'
+                                padding: 0,dp(4)
+                            BWLabel:
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                text_size: self.width, None
+                                id: logs_content
+                                #font_style: 'Subhead'#'Body1'
+                                #theme_text_color: 'Primary'
+                                markup: True
+    #                            shorten: True 
+    #                            shorten_from: 'right'
+                                text: 'test [color=ff3333]Hello[/color]'   
+                                padding: 0,dp(4) 
+                    BoxLayout:
+                        #cols: 1
+                        #anchor_x: 'center'
+                        #anchor_y: 'center'
+                        size_hint: 1,None
+                        height: dp(54)
+                        BWBorderButton:
+                            #size_hint: None,None
+                            #padding: dp(16)
+                            text: 'Refresh'
+                            on_release:
+                                app.load_logs()
+
+
+
+<StripLayout>
+    padding: '0dp', '0dp', '0dp', '0dp'
+ 
+#<-TabbedPanelStrip>
+#    size_hint_y: 1
+#    canvas:
+#        Color:
+#            rgba: (1, 0, 0, 1) # green
+#        Rectangle:
+#            #size: self.size
+#            pos: self.pos
+ 
+<Label>:
+    font_name: 'fonts/Roboto-Regular.ttf'
+    markup: True
+    color: 0,0,0,1 
+    
+#    canvas.before:
+#        Color:
+#            rgb: 1,0,0
+#        Rectangle:
+#            pos: self.pos
+#            size: self.size  
+    
+
+<TabbedPanelHeader>:
+    halign: 'center'
+    valign: 'middle'
+    background_normal: 'art/white.png'
+    background_disabled_normal: 'art/white.png'
+    background_down: 'art/gray50.png'
+    background_disabled_down: 'art/white.png'
+    border: (0, 0, 0, 0)
+    font_size: '20sp'
+       
+<DetailSpacer>:
+    size_hint_y: None
+    height: 20
+    canvas:
+        Color:
+            rgb: self.bwtheme_cls.secondary_foreground_color
+        Rectangle:
+            pos: self.x, self.center_y
+            size: self.width, 1   
+
+#<File>:
+#    BWButton:
+#        size_hint_y: None
+#        #theme_text_color: 'Primary'
+#        font_style: 'Body'
+#        text: root.filename or ''
+               
+ 
+              
+<JournalDetails>:
+    canvas:
+        Color:
+            rgba: app.bwtheme_cls.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    details_content: details_content
+    ScrollView:
+        do_scroll_x: False
+#        size_hint: (1, None)
+        #size: (Window.width, Window.height)
+        
+        GridLayout:
+            id: details_content
+            size_hint_y: None
+            cols: 1
+            padding: dp(20)
+#            orientation: 'vertical'
+#            pos: root.pos[0]+dp(200),root.pos[1]+dp(20)
+#            minimum_height: self.height
+            height: 1.2*self.minimum_height
+            #minimum_height: self.setter('height')
+            #size: root.width, root.height
+            BWLabel:
+                id: title
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+                font_style: 'Headline'
+                #theme_text_color: 'Primary'
+                text: 'Title'
+    
+            DetailSpacer:
+            BWLabel:
+                id: authors
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+                #font_style: 'Subhead'
+                #theme_text_color: 'Primary'
+                text: 'Authors'
+
+            BWLabel:
+                id: details
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+                #font_style: 'Subhead'
+                #theme_text_color: 'Primary'
+                text: 'Journal and article information'
+    
+            DetailSpacer:
+            BWLabel:
+                id: abstract
+                size_hint_y: Nonec
+                text_size: self.width, None
+                height: self.texture_size[1]
+                #font_style: 'Subhead'
+                #theme_text_color: 'Primary'
+                text: 'Abstract'
+                size_hint_y: None
+                
+            DetailSpacer:
+            MDList:
+                id: files_layout
+                size_hint_y: None
+
+
+
+
+
+   
+    
+<DetailLabel>:
+    size_hint_y: None
+    text_size: self.width, None
+    height: self.texture_size[1]
+    
+
+
+#<Spinner>
+#    size_hint: None, None
+#    size: dp(46), dp(46)
+#    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+#    active: True if chkbox.active else False
+
+#<SettingPassword>:
+#	PasswordLabel:
+#		text: '(set)' if root.value else '(unset)'
+#		pos: root.pos
+#		font_size: '15sp'
+
+ 
+<MDSearchInput@TextInput>:
+    font_size: '15dp'
+    background_color: app.bwtheme_cls.primary_color
+    foreground_color: 1,1,1,1
+    background_normal: 'art/textinput.png'
+    background_active: 'art/textinput.png'
+    cursor_color: 1.,0.25,0.5,1.
+    canvas.after:
+        Color:
+            rgba: .8, .8, .8, .7
+        Rectangle:
+            pos: self.x+self.padding[0], self.y+9
+            size: self.width-2*self.padding[0], 2.5  
+ 
+<SearchInput@TextInput>:
+    font_size: '14dp'
+    background_color: 1,1,1,1
+    foreground_color: 1,1,1,1
+    background_normal: 'art/textinput.png'
+    background_active: 'art/textinput.png'
+    cursor_color: get_color_from_hex('#000000')
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex('#000000')
+    canvas.after:
+        Color:
+            rgb: 1,1,1,1#get_color_from_hex('#0f192e')
+        Ellipse:
+            angle_start:180
+            angle_end:360
+            pos:(self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Ellipse:
+            angle_start:360
+            angle_end:540
+            pos: (self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Color:
+            rgba: get_color_from_hex('#3f92db')
+        Line:
+            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
+        Line:
+            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
+        Line:
+            ellipse: self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 180, 360
+        Line:
+            ellipse: self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 360, 540
+
+           
+<MDTextInput@TextInput>:
+    canvas:
+        Color: 
+            rgb: (1,1,1)
+    
+<-ModalView>:
+
+#    canvas:
+#        Color:
+#            rgba: (1,0,0,1)
+#        RoundedRectangle:
+#            size: self.size
+#            pos: self.pos
+#            radius: (dp(8),)
+
+<BWLabel>:
+    #font_name: 'fonts/Roboto-Regular.ttf'
+    font_style: 'Body'
+    #font_size: '17dp'
+    markup: True
+    color: self.bwtheme_cls.foreground_color
+
+
+<BWButtonBehavior>:
+    ##_current_button_color: self.button_color_up if self.state == 'normal' else self.button_color_down
+    ##_current_text_color: self.text_color_up if self.state == 'normal' else self.button_color_up
+    #_current_text_color: self.foreground_color if self.state == 'normal' else self.background_color
+    #_current_button_color: self.background_color if self.state == 'normal' else self.foreground_color
+    _current_text_color: self.bwtheme_cls.foreground_color if self.state == 'normal' else self.bwtheme_cls.background_color
+    _current_button_color: self.bwtheme_cls.background_color if self.state == 'normal' else self.bwtheme_cls.foreground_color
+
+<-BWBorderButton>:
+    
+    markup: True
+    border_size: 2
+    height: dp(36)
+    width: dp(64)#self.texture_size[0] + dp(32)
+    #padding: (dp(8), 0)
+    content: content
+    #_current_button_color: self.button_color_up if self.state == 'normal' else self.button_color_down
+    #_current_text_color: self.text_color_up if self.state == 'normal' else self.button_color_up
+    _current_text_color: self.bwtheme_cls.foreground_color if self.state == 'normal' else self.bwtheme_cls.background_color
+    _current_button_color: self.bwtheme_cls.background_color if self.state == 'normal' else self.bwtheme_cls.foreground_color
+    canvas.before:
+        Clear
+        Color:
+            rgba: self._current_button_color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: (dp(5),)
+        Color:
+            rgba: root.border_color if root.border_color else self.bwtheme_cls.foreground_color
+        Line:
+            rounded_rectangle: self.pos[0],self.pos[1],self.size[0],self.size[1],8,8,8,8,400
+            width: root.border_size
+#        RoundedRectangle:
+#            size: self.size[0]-2*self.border_size, self.size[1]-2*self.border_size
+#            pos: self.pos[0]+self.border_size, self.pos[1]+self.border_size
+#            radius: (dp(5),)
+    BWLabel:
+        id: content
+        anchor_x: 'center'
+        anchor_y: 'center'
+        color: root._current_text_color
+        text: root.text
+        font_style: 'BodyBold'
+
+
+<BWButton>:
+    border_color: 0,0,0,0
+
+<IconLabel>:
+    text: u"{}".format(md_icons[self.icon]) if self.icon else ''
+    font_name: 'fonts/materialdesignicons-webfont.ttf'
+    font_size: dp(32)
+
+<IconButton>:
+    size_hint: None,None
+    icon_size: dp(48)
+    size: self.icon_size,self.icon_size
+    font_size: self.icon_size-dp(16)
+    #_current_button_color: self.button_color_up if self.state == 'normal' else self.button_color_down
+    #color: self.text_color_up if self.state == 'normal' else self.button_color_up
+    color: self._current_text_color
+    canvas.before:
+        Color:
+            rgba: self._current_button_color
+        Ellipse:
+            size: self.icon_size-dp(8),self.icon_size-dp(8) #self._content_size,self._content_size
+            pos: self.pos[0]+dp(4),self.pos[1]+dp(4)
+        Color:
+            rgba: self.border_color if self.border_color else self.bwtheme_cls.foreground_color if self.border else [0,0,0,0]
+        Line:
+            circle: self.pos[0]+root.icon_size//2,self.pos[1]+root.icon_size//2,root.icon_size//2-dp(4)
+            width: self.border_size 
+
+<ScrollButtons>:
+    #size_hint_x: None
+    #width: dp(48) 
+    BoxLayout:
+        size_hint: None,None   
+        width: dp(104)   
+        orientation: 'vertical'
+        on_height: self.update_visible_list
+        IconButton:
+            icon_size: dp(64)
+            icon: 'arrow-up-bold'
+            border: True
+            on_release: root.go_up()
+        Widget:
+            size_hint_y: None
+            height: dp(8)
+        IconButton:
+            icon_size: dp(64)
+            icon: 'arrow-down-bold' 
+            border: True
+            on_release: root.go_down()
+
+<ButtonScrollList>:
+    orientation: 'vertical' 
+    content: content
+    progress_bar: progress_bar
+    #size_hint: 1,1
+
+
+    BoxLayout:
+        orientation: 'vertical'
+        GridLayout:
+            id: content    
+            #orientation: 'vertical'        
+            cols: 1
+        ProgressBar:
+            id: progress_bar
+            size_hint_y: None
+            height: dp(24)
+            max: len(root.item_list)
+            value: root.current_item_index+root.current_display_count
+    ScrollButtons:
+        #width: dp(64)
+        anchor_x: 'right'
+        anchor_y: 'center'
+        go_up: root.go_up_in_list
+        go_down: root.go_down_in_list
+
+<IconMenuItem>:
+    orientation: 'horizontal'
+    size_hint_y: None
+    height: dp(48)
+    size_hint_x: None
+    width: dp(200)
+    spacing: dp(8)
+    padding_x: dp(8)
+    canvas.before:
+        Color:
+            rgba: self._current_button_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    IconLabel:
+        size_hint_x: None
+        width: dp(48)
+        icon: root.icon
+        color: root._current_text_color
+    BWLabel:
+        text_size: self.size[0],None
+        #width: self.texture_size[0]
+        text: root.text
+        color: root._current_text_color
+
+<ProgressBar>:
+    canvas:
+        Color:
+            rgb: 0.5, 0.5, 0.5
+        Rectangle:
+            pos: self.x, self.center_y - 12
+            size: self.width, 24
+        Color:
+            rgb: 0.15, 0.15, 0.15
+        Rectangle:
+            pos: self.x, self.center_y - 12
+            size: self.width * (self.value / float(self.max)) if self.max else 0, 24
+
+<PapToolbar>:
+
+<PapDialog>:
+    pos_hint: {'center_x': .5, 'center_y': .5}
+    _container: container
+    _action_area: action_area  
+    title: 'test'
+    canvas:
+        Color:
+            rgba: self.bwtheme_cls.background_color#root.background_color
+        RoundedRectangle:
+            size: self.size[0]-2*self.border_size, self.size[1]-2*self.border_size
+            pos: self.pos[0]+self.border_size, self.pos[1]+self.border_size
+            radius: (dp(5),)
+    canvas.after:
+        Color:
+            rgba: root.border_color if root.border_color else self.bwtheme_cls.foreground_color
+        Line:
+            rounded_rectangle: self.pos[0],self.pos[1],self.size[0],self.size[1],8,8,8,8,400
+            width: root.border_size
+    GridLayout:
+        cols: 1
+        GridLayout:
+            cols: 1
+            padding: dp(24), dp(24), dp(24), dp(24)
+            spacing: dp(20)
+            BWLabel:
+                id: title_label
+                text: root.title
+                color: self.bwtheme_cls.foreground_color
+                font_style: 'Subhead'
+                #font_size: '20dp'
+                halign: 'left'
+                valign: 'middle'
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+            BoxLayout:
+                #size_hint_y: None
+                #height: self.minimum_height
+                id: container
+        AnchorLayout:
+            anchor_x: 'right'
+            anchor_y: 'center'
+            size_hint: 1, None
+            height: dp(64) #if len(root._action_buttons) > 0 else 0
+            padding: dp(22), dp(22)
+            GridLayout:
+                id: action_area
+                rows: 1
+                size_hint: None, None #if len(root._action_buttons) > 0 else 1
+                height: dp(36) #if len(root._action_buttons) > 0 else 0
+                width: self.minimum_width
+                spacing: dp(16)
+
+
+<PapPopup>:
+    text: ''
+    minimum_width: dp(350)
+    id: popup_dialog
+    size_hint: (None,None)
+    #width: self._action_area.width #+ dp(00)
+    #width: dp(184)
+    width: dp(400)
+    height: dp(220)
+    #texture_size: content.size
+    BWLabel:
+        id: text
+        color: self.bwtheme_cls.foreground_color
+        #font_size: '17dp'
+        font_style: 'Subhead'
+        #halign: 'justify'
+        text: root.text
+        size_hint: None,None
+        valign: 'middle'
+        #texture_size: self.size
+        text_size: root.width-dp(50), None
+        width: self.texture_size[0]
+
+<BWToolbar>:
+    size_hint_y: None
+    left_actions: left_actions
+    right_actions: right_actions
+    padding: [dp(12), 0]
+    size_hint_y: None
+    height: dp(64)
+    padding: dp(12),0
+    canvas:
+        Color:
+            rgba: self.bwtheme_cls.background_color#self.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    BoxLayout:
+        id: left_actions
+        orientation: 'horizontal'
+        size_hint_x: None
+        padding: [0, (self.height - dp(48))/2]
+    BoxLayout:
+        padding: dp(12), 0        
+        BWLabel:
+            #font_size: '24dp'
+            font_style: 'BigTitle'
+            #font_name: 'fonts/Roboto-Bold.ttf'
+            text: root.title
+            shorten: True
+            shorten_from: 'right'
+    BoxLayout:
+        id: right_actions
+        orientation: 'horizontal'
+        size_hint_x: None
+        padding: [dp(0), (self.height - dp(48))/2]
+        spacing: dp(12)
+
+ 
+
+
+<SubMenu>:
+    size_hint: None,None
+    #background_color: 0,0,0,0
+    content: content
+    canvas.before:
+        Clear
+        Color:
+            rgba: self.bwtheme_cls.background_color
+        RoundedRectangle:
+            size: self.size[0]-2*self.border_size, self.size[1]-2*self.border_size
+            pos: self.pos[0]+self.border_size, self.pos[1]+self.border_size
+            radius: (dp(5),)
+    canvas.after:
+        Color:
+            rgba: self.border_color if self.border_color else self.bwtheme_cls.foreground_color
+        Line:
+            points: 
+                self._anchor_pos[0], self.pos[1]+self.height+self._anchor_size[1],\
+                self._anchor_pos[0], self.pos[1]+self.height,\
+                self.pos[0], self.pos[1]+self.height,\
+                self.pos[0], self.pos[1],\
+                self.pos[0]+self.width,self.pos[1],\
+                self.pos[0]+self.width,self.pos[1]+self.height,\
+                self._anchor_pos[0]+self._anchor_size[0], self.pos[1]+self.height,\
+                self._anchor_pos[0]+self._anchor_size[0], self.pos[1]+self.height+self._anchor_size[1]
+            width: self.border_size
+    GridLayout:
+        id: content
+        size_hint_x: None
+        cols: 1        
+
+<ProgressDialog>:
+    #size_hint: (.8, None)
+    size_hint: None,None    
+    height: dp(200)
+    width: dp(450)
+    auto_dismiss: True
+    BoxLayout:
+        size_hint_y: None
+        orientation: 'vertical'
+        padding: dp(24)
+        #cols: 1
+        ProgressBar:
+            max: root.max_value
+            value: root.progress_value
+        BWLabel:
+            padding: dp(48),dp(0)
+            text: root.info
+
+<LoadingDialog>:
+    size_hint: (.8, None)
+    height: dp(200)
+    auto_dismiss: True
+    GridLayout:
+        size_hint_y: None
+        cols: 1
+        MDSpinner:
+            id: spinner
+            size_hint: None, None
+            size: dp(46), dp(46)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            active: True
+        BWLabel:
+            #font_style: 'Subhead'
+            #theme_text_color: 'Primary'
+            text: root.info
+            shorten: True
+            shorten_from: 'right'
+            padding: 0,dp(16)
+
+<SearchBox>
+    size_hint: None,None
+    height: dp(64)
+    orientation: 'horizontal'
+    search_field: search_field
+    BWTextInput:
+        padding_x: dp(20), dp(8)
+        size_hint_x: None
+        width: root.width-dp(48)
+        id: search_field
+        multiline: False
+        on_text_validate: root.on_search(search_field.text)
+    AnchorLayout:
+        anchor_x: 'right'
+        anchor_y: 'center'
+        IconButton:
+            id: search_button
+            icon: 'arrow-right-bold'
+            on_release: root.on_search(search_field.text)
+
+<-BWTextInput>:
+    font_size: '20dp'
+    font_name: 'fonts/Roboto-Regular.ttf'
+    cursor_blink: False
+    
+    #    [self.center[0] - self._get_text_width(max(self._lines, key=len), self.tab_width, self._label_cached) / 2.0,
+    #    0] if self.text else [self.center[0], 0]
+    padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), dp(0)]
+
+    cursor_width: dp(3)
+    cursor_color: 0,0,0,1
+    background_color: app.bwtheme_cls.secondary_background_color
+    text_border_size: dp(6)
+    canvas.before:
+#        Color:
+#            rgba:  0,1,0,1
+#        Rectangle:
+#            pos: self.pos
+#            size: self.size
+        Color:
+            rgba: self.background_color
+        Rectangle:
+            pos: self.pos[0]+self.padding_x[0]-self.text_border_size,self.y+self.height-self.line_height-self.padding_y[0]-self.text_border_size#self.pos[1]-2*self.text_border_size-self.padding_y[0]
+            size: self.size[0]-self.padding_x[0]-self.padding_x[1]+2*self.text_border_size, self.line_height+2*self.text_border_size
+        Color:
+            rgba:
+                (self.cursor_color
+                if self.focus and not self._cursor_blink
+                else app.bwtheme_cls.foreground_color)
+        Rectangle:
+            pos: [int(x) for x in self.cursor_pos]
+            size: root.cursor_width, -self.line_height
+        Color:
+            rgba: self.disabled_foreground_color if self.disabled else (self.hint_text_color if not self.text else self.foreground_color)
+
+<ListItem>
+    size_hint_y: None
+    #style: 'Bright'
+    canvas:
+        Color:
+            rgba: self._current_button_color#self.bwtheme_cls.background_color 
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: self.bwtheme_cls.secondary_foreground_color if root.divider is not None else (0, 0, 0, 0)
+        Line:
+            points: (root.x ,root.y, root.x+self.width, root.y)
+#                if root.divider == 'Full' else\
+#                (root.x+root._txt_left_pad, root.y,\
+#                root.x+self.width-root._txt_left_pad-root._txt_right_pad,\
+#                root.y)
+    BoxLayout:
+        id: _text_container
+        orientation: 'vertical'
+        pos: root.pos
+        padding: root._txt_left_pad, root._txt_top_pad, root._txt_right_pad, root._txt_bot_pad
+        BWLabel:
+            id: _lbl_primary
+            text: root.text
+            color: root._current_text_color#root.bwtheme_cls.foreground_color
+            size_hint_y: None
+            text_size: self.size
+            height: self.texture_size[1]
+            halign: 'left'
+            shorten: True
+            shorten_from: 'right'
+            strip: True
+
+<PaperListItem>
+    size_hint_y: None
+    #style: 'Bright'
+    canvas.before:
+        Color:
+            rgba: self.bwtheme_cls.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    canvas:
+        Color:
+            rgba: self.bwtheme_cls.secondary_foreground_color if root.divider is not None else (0, 0, 0, 0)
+        Line:
+            points: (root.x ,root.y, root.x+self.width, root.y)
+#                if root.divider == 'Full' else\
+#                (root.x+root._txt_left_pad, root.y,\
+#                root.x+self.width-root._txt_left_pad-root._txt_right_pad,\
+#                root.y)
+            width: dp(1)
+    BoxLayout:
+        id: _text_container
+        orientation: 'vertical'
+        pos: root.pos
+        padding: root._txt_left_pad, root._txt_top_pad, root._txt_right_pad, root._txt_bot_pad
+        BWLabel:
+            id: _lbl_primary
+            text: root.text
+            color: root.bwtheme_cls.foreground_color
+            size_hint_y: None
+            text_size: self.size
+            font_style: 'BodyBold'
+            height: self.texture_size[1]
+            halign: 'left'
+            shorten: True
+            shorten_from: 'right'
+            strip: True
+        BWLabel:
+            id: _lbl_secondary
+            text: root.secondary_text
+            #font_style: root.secondary_font_style
+            #theme_text_color: root.bwtheme_cls.secondary_theme_text_color
+            color: root.bwtheme_cls.secondary_foreground_color
+            font_style: 'Body'
+            size_hint_y: None
+            text_size: self.size
+            height: self.texture_size[1]
+            halign: 'left'
+            shorten: True
+            shorten_from: 'right'
+            strip: True
+        BWLabel:
+            id: _lbl_tertiary
+            text: root.tertiary_text
+            #font_style: root.tertiary_font_style
+            #theme_text_color: root.tertiary_theme_text_color
+            color: root.bwtheme_cls.secondary_foreground_color
+            italic: True
+            size_hint_y: None
+            text_size: self.size
+            height: self.texture_size[1]
+            halign: 'left'
+            shorten: True 
+            shorten_from: 'right'
+            strip: True
+
+# =============================================================================
+# Settings
+# =============================================================================
+
+<-BWSettingSpacer>:
+    size_hint_y: None
+    height: 5
+    canvas:
+        Color:
+            rgb: self.bwtheme_cls.secondary_foreground_color
+        Rectangle:
+            pos: self.x, self.center_y
+            size: self.width, 1
+
+<-BWSettingItem>:
+    size_hint: .25, None
+    height: labellayout.texture_size[1] + dp(18)
+    content: content
+    canvas:
+        Clear
+#            rgba: 1,1,0,0#self.bwtheme_cls.foreground_color#47 / 255., 167 / 255., 212 / 255., self.selected_alpha
+#        Rectangle:
+#            pos: self.x, self.y + 1
+#            size: self.size
+        Color:
+            rgb: self.bwtheme_cls.secondary_background_color
+        Rectangle:
+            pos: self.x, self.y - dp(8)
+            size: self.width, 2
+
+    BoxLayout:
+        pos: root.pos
+
+        BWLabel:
+            size_hint_x: .6
+            id: labellayout
+            markup: True
+            color: self.bwtheme_cls.foreground_color
+            #text: u'{0}\n{1}'.format(root.title or '', root.desc or '')
+            text: u'{0}'.format(root.title or '')
+            font_style: 'Subhead'
+            text_size: self.width - 32, None
+
+        BoxLayout:
+            id: content
+            size_hint_x: .4
+
+<BWSettingBoolean>:
+    Switch:
+        text: 'Boolean'
+        pos: root.pos
+        active: bool(root.values.index(root.value)) if root.value in root.values else False
+        on_active: root.value = root.values[int(args[1])]
+
+
+
+<BWSettingString>:
+    Label:
+        id: label_value
+        text: 
+            root.value or '' if not root.password else '(set)' if root.value else '(unset)'
+        pos: root.pos
+        text_size: self.width, None
+        font_style: 'Body'    
+        halign: 'left'
+        #color: self.bwtheme_cls.foreground_color   
+        
+
+
+   
+
+
+<BWSettingOptions>:
+    BWLabel:
+        text: root.value or ''
+        pos: root.pos
+        font_style: 'Body'
+
+<-SettingTitle>:
+    text_size: self.width - 32, None
+    size_hint_y: None
+    height: max(dp(20), self.texture_size[1] + dp(20))
+    color: (.9, .9, .9, 1)
+    font_size: '25sp'
+#    canvas:
+#        Color:
+#            rgba: self.bwtheme_cls.background_color#.15, .15, .15, .5
+#        Rectangle:
+#            pos: self.x, self.y + 2
+#            size: self.width, self.height - 2
+#        Color:
+#            rgb: .2, .2, .2
+#        Rectangle:
+#            pos: self.x, self.y - 2
+#            size: self.width, 1
+
+
+
+<-SettingsPanel>:
+    pos_hint: {'x': 0, 'y': 0}
+    spacing: 5
+    padding: 5
+    size_hint_y: None
+    height: self.minimum_height
+
+#    BWLabel:
+#        size_hint_y: None
+#        text: root.title
+#        font_style: 'Subhead'
+#        #text_size: self.width - 32, None
+#        height: max(50, self.texture_size[1] + 20)
+#        color: self.bwtheme_cls.foreground_color#(.5, .5, .5, 1)
+#        #font_size: '15sp'
+#
+#        canvas.after:
+#            Color:
+#                rgb: self.bwtheme_cls.secondary_background_color#.2, .2, .2
+#            Rectangle:
+#                pos: self.x, self.y - 2
+#                size: self.width, 1
+
+<-Settings>:
+    pos_hint: {'x': 0, 'y': 0}
+    orientation: 'horizontal'
+    canvas.before:
+        Color:
+            rgb: 1, 1, 0
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<ToggleButton>:
+    background_normal: ''
+    background_color: app.bwtheme_cls.background_color if self.state == 'normal' else app.bwtheme_cls.foreground_color
+    color: app.bwtheme_cls.foreground_color if self.state == 'normal' else app.bwtheme_cls.background_color
+
+
+
+<-TabbedPanelContent>:
+    rows: 1
+    padding: 3
+
+
+<-ContentPanel>:
+    do_scroll_x: False
+    container: content
+    GridLayout:
+        id: content
+        cols: 1
+        size_hint_y: None
+        height: self.minimum_height
+
+<-BWInterfaceWithTabbedPanel>:
+    pos_hint: {'x': 0, 'y': 0}
+    tabbedpanel: tp
+    #background_color: self.bwtheme_cls.background_color
+    canvas:
+        Color: 
+            rgba: app.bwtheme_cls.background_color
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    TabbedPanel:
+        pos_hint: {'x': 0, 'y': 0}
+        id: tp
+        size: root.size
+        pos: root.pos
+        #do_default_tab: False
+        #background_color: 1,1,0,1#root.bwtheme_cls.background_color
+        #background_color: app.bwtheme_cls.background_color[1],app.bwtheme_cls.background_color[2],app.bwtheme_cls.background_color[3]
+
+
+

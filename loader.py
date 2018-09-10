@@ -90,12 +90,12 @@ class Client(object):
                 Logger.info('LOADER: Directory list: %s.' % ' '.join([s for s in list_dir]))
                 return list_dir
             except Exception,e:
-#                Logger.exception('Connection error with message: %s.' % str(e))
-#            self.parent_app.show_error_dialog(
-#                    title = 'Error retrieving directory list.',
-#                    message = 'Please check your connection and your credentials.\n\nError message: %s' % e
-#            )
-                return e
+                Logger.exception('Connection error with message: %s.' % str(e))
+                self.parent_app.show_error_dialog(
+                        title = 'Error retrieving directory list.',
+                        message = 'Please check your connection and your credentials.\n\nError message: %s' % e
+                )
+                return None
             return None
         return None
 
@@ -313,7 +313,7 @@ class Target(object):
                             self.error=e
                             Logger.error(e)
                     else:
-                        Logger.info('File: \'%s\' already exists, skipping.')
+                        Logger.info('File: %s already exists, skipping.' % local_path)
         except Exception,e:
             self.error=e
             Logger.error(e)
@@ -373,7 +373,9 @@ class Loader():
             self.client = SFTP_client(self.parent_app)
         self.client.connect(options)   
         
-
+    
+    def trigger_abord(self):
+        self.abord = True
         #print('cache folder: %s'% self.cache_folder)
         
 #    def wait(self):
@@ -422,22 +424,26 @@ class Loader():
             self.busy_thread = threading.Thread(target= lambda: self.client.download(remote_file_path,local_file_path))
             self.busy = True
             self.busy_thread.start()
-            self.parent_app.open_progress_dialog("Downoading file")
-            dialog = self.parent_app.progress_dialog
-            dialog.ids.progress_bar.max = self.client._size(remote_file_path)
+            #self.parent_app.open_progress_dialog("Downoading file")
+            #dialog = self.parent_app.progress_dialog
+            progress_dialog = ProgressDialog(title='Loading library')
+            progress_dialog.bind(on_dismiss=lambda x: self.loader.trigger_abord())
+            progress_dialog.open()
+            
+            progress_dialog.progress_bar.max = self.client._size(remote_file_path)
 
 
             def clock_func(dt):
                 try:
-                    current_size = dialog.ids.progress_bar.value = os.path.getsize(local_file_path)
+                    current_size = progress_dialog.progress_bar.value = os.path.getsize(local_file_path)
                 except OSError:
                     current_size = 0
                     
-                dialog.info = 'Downloading... %g%%' % int(100.*dialog.ids.progress_bar.value/dialog.ids.progress_bar.max)
+                progress_dialog.info = 'Downloading... %g%%' % int(100.*progress_dialog.progress_bar.value/progress_dialog.progress_bar.max)
                 
                 if not self.busy_thread.isAlive():
                     Clock.unschedule(clock_func)
-                    dialog.dismiss()
+                    progress_dialog.dismiss()
                     self.busy = False
                     
             
@@ -519,7 +525,7 @@ class Loader():
             return 
 
         # set the max progress bar length corresponding to the number of folders
-        dialog.ids.progress_bar.max = len(folder_list)
+        dialog.max_value = len(folder_list)
         local_folder = self.cache_folder
 
  
@@ -529,7 +535,7 @@ class Loader():
 #            if error:
 #                error_list.append(error)
             cnt = len(folder_list)-thread_queue.qsize()
-            dialog.ids.progress_bar.value = max(cnt,dialog.ids.progress_bar.value)
+            dialog.progress_value = max(cnt,dialog.progress_value)
             #dialog.info = 'coucou'
             dialog.info = 'Folder %g/%g' % (cnt,len(folder_list))
 #            dialog.info = dialog.info + '\n\nError log:\n' '\n'.join(error_list)

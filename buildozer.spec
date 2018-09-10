@@ -13,10 +13,11 @@ package.domain = org.papis.papiview
 source.dir = .
 
 # (list) Source files to include (let empty to include all the files)
-source.include_exts = md,py,png,jpg,kv,atlas,json
+source.include_exts = md,py,png,jpg,kv,atlas,json,ttf
 
 # (list) List of inclusions using pattern matching
-#source.include_patterns = *.md#assets/*,images/*.png
+#source.include_patterns = 
+#*.md #assets/*,images/*.png
 
 # (list) Source files to exclude (let empty to not exclude anything)
 #source.exclude_exts = spec
@@ -68,7 +69,7 @@ presplash.filename = /home/spopoff/dev/papiview/art/big_logo.png
 
 # (str) Icon of the application
 #icon.filename = /home/spopoff/dev/KivyMD/kivymd/images/kivymd_logo.png
-icon.filename = /home/spopoff/dev/papiview/art/logo_notext.png 
+icon.filename = /home/spopoff/dev/papiview/art/logo_notext_bw.png 
 # (str) Supported orientation (one of landscape, portrait or all)
 orientation = all
 #all

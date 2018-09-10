@@ -1,0 +1,473 @@
+#:import Toolbar kivymd.toolbar.Toolbar
+#:import ThemeManager kivymd.theming.ThemeManager
+#:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
+#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
+#:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
+#:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
+#:import NavigationDrawerSubheader kivymd.navigationdrawer.NavigationDrawerSubheader
+#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
+#:import MDSwitch kivymd.selectioncontrols.MDSwitch
+#:import MDList kivymd.list.MDList
+#:import OneLineListItem kivymd.list.OneLineListItem
+#:import TwoLineListItem kivymd.list.TwoLineListItem
+#:import ThreeLineListItem kivymd.list.ThreeLineListItem
+#:import OneLineAvatarListItem kivymd.list.OneLineAvatarListItem
+#:import OneLineIconListItem kivymd.list.OneLineIconListItem
+#:import OneLineAvatarIconListItem kivymd.list.OneLineAvatarIconListItem
+#:import MDTextField kivymd.textfields.MDTextField
+#:import MDSpinner kivymd.spinner.MDSpinner
+#:import MDCard kivymd.card.MDCard
+#:import MDSeparator kivymd.card.MDSeparator
+#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import colors kivymd.color_definitions.colors
+#:import SmartTile kivymd.grid.SmartTile
+#:import MDSlider kivymd.slider.MDSlider
+#:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
+#:import MDTab kivymd.tabs.MDTab
+#:import MDProgressBar kivymd.progressbar.MDProgressBar
+#:import MDThemePicker kivymd.theme_picker.MDThemePicker
+#:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
+#:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
+#:import Settings kivy.uix.settings
+##:import SettingsString kivy.uix.settings.SettingsString
+##:import SettingsItem kivy.uix.settings.SettingsItem 
+
+NavigationLayout:
+    id: nav_layout
+    MDNavigationDrawer:
+        id: nav_drawer
+        NavigationDrawerToolbar:
+            title: "Menu"
+        NavigationDrawerIconButton:
+            id: lib_medu_btn
+            icon: 'library-books'
+            text: "Library"
+            on_release: app.root.ids.scr_mngr.current = 'library'
+        NavigationDrawerIconButton:
+            id: setting_menu_btn
+            icon: 'settings'
+            text: "Settings"
+            on_release: app.select_settings_scr()
+        NavigationDrawerIconButton:
+            id: info_menu_btn
+            icon: 'help-circle-outline'
+            text: "Information"
+            on_release: app.root.ids.scr_mngr.current = 'information'
+        NavigationDrawerIconButton:
+            id: logs_menu_btn
+            icon: 'code-brackets'#'developer-board'
+            text: "Logs"
+            on_release: app.root.ids.scr_mngr.current = 'logs'
+
+
+    BoxLayout:
+        orientation: 'vertical'
+        Toolbar:
+            id: toolbar
+            title: 'Papiview'
+            md_bg_color: app.theme_cls.primary_color
+            background_palette: 'Primary'
+            #background_hue: '500'
+            left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
+            right_action_items: 
+                [['eraser', lambda x: app.clear_cache()],\
+                ['refresh', lambda x: app.load_library()],\
+                ['download', lambda x: app.load_offline()]]
+        ScreenManager:
+            id: scr_mngr
+            Screen:
+                name: 'library'
+                MDTabbedPanel:
+                    id: tab_panel
+                    tab_display_mode:'text' 
+
+                    MDTab:
+                        id: lib_tab
+                        name: 'library'
+                        text: "Library" # Why are these not set!!!
+                        #icon: "playlist-play"
+                        #md_bg_color: app.theme_cls.bg_dark
+                        #on_tab_touch_down: app.load_library_from_cache # does not work, why?
+                        ScrollView:
+                            do_scroll_x: False
+                            MDList:
+                                background_color: app.theme_cls.bg_dark
+                                id: article_list
+                    MDTab:
+                        id: details_tab
+                        name: 'details'
+                        text: 'Details'
+                        #icon: "movie"
+                        JournalDetails:
+                            id: journal_details
+
+
+                    
+                            
+            Screen:
+                name: 'settings'
+                id: settings_screen
+                BoxLayout:
+                    id:settings_box
+                    title: 'Settings'
+
+            Screen:
+                name: 'information'
+                id: information_screen
+                ScrollView:
+                    GridLayout:
+                        id:information_box
+                        title: 'Information'
+                        cols: 1
+                        size_hint: 1.,None    
+                        height: self.minimum_height                  
+                        padding: dp(16)
+                        MDLabel:
+                            id: info_title
+                            size_hint: 1.,None 
+                            height: self.texture_size[1]
+                            theme_text_color: 'Primary'
+                            text: self.parent.title
+                            font_style: 'Title'
+                            padding: 0,dp(4)
+                        MDLabel:
+                            size_hint: 1.,None 
+                            height: self.texture_size[1]
+                            id: info_content
+                            font_style: 'Subhead'#'Body1'
+                            theme_text_color: 'Primary'
+                            markup: True
+                            halign: 'justify'
+                            padding: 0,dp(4)
+                            text: 'test [color=ff3333]Hello[/color]'
+                            on_ref_press:
+                                from android_interactions import open_url
+                                #import webbrowser
+                                open_url(args[1])
+                                #webbrowser.open(args[1])
+
+            Screen:
+                name: 'logs'
+                id: logs_screen
+                GridLayout:
+                    cols: 1
+                    padding: dp(16)
+                    ScrollView:
+                        GridLayout:
+                            id:information_box
+                            title: 'Logs'
+                            cols: 1
+                            size_hint: 1.,None    
+                            height: self.minimum_height                  
+                            
+                            MDLabel:
+                                #id: logs_title
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                theme_text_color: 'Primary'
+                                text: self.parent.title
+                                font_style: 'Title'
+                                padding: 0,dp(4)
+                            MDLabel:
+                                size_hint: 1.,None 
+                                height: self.texture_size[1]
+                                id: logs_content
+                                font_style: 'Subhead'#'Body1'
+                                theme_text_color: 'Primary'
+                                markup: True
+    #                            shorten: True 
+    #                            shorten_from: 'right'
+                                text: 'test [color=ff3333]Hello[/color]'   
+                                padding: 0,dp(4) 
+                    AnchorLayout:
+                        #cols: 1
+                        anchor_x: 'center'
+                        anchor_y: 'center'
+                        size_hint: 1,None
+                        height: dp(54)
+                        MDRaisedButton:
+                            #size_hint: None,None
+                            padding: dp(16)
+                            text: 'Refresh'
+                            on_release:
+                                app.load_logs()
+
+        
+<DetailSpacer>:
+    size_hint_y: None
+    height: 20
+    canvas:
+        Color:
+            rgb: .5, .5, .5
+        Rectangle:
+            pos: self.x, self.center_y
+            size: self.width, 1   
+
+<File>:
+    MDLabel:
+        size_hint_y: None
+        theme_text_color: 'Primary'
+        text: root.filename or ''
+               
+                
+<JournalDetails>:
+    details_content: details_content
+    ScrollView:
+        do_scroll_x: False
+#        size_hint: (1, None)
+        #size: (Window.width, Window.height)
+        
+        GridLayout:
+            id: details_content
+            size_hint_y: None
+            cols: 1
+            padding: dp(20)
+#            orientation: 'vertical'
+#            pos: root.pos[0]+dp(200),root.pos[1]+dp(20)
+#            minimum_height: self.height
+            height: 1.2*self.minimum_height
+            #minimum_height: self.setter('height')
+            #size: root.width, root.height
+            MDLabel:
+                id: title
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+                font_style: 'Headline'
+                theme_text_color: 'Primary'
+                text: 'Title'
+    
+            DetailSpacer:
+            MDLabel:
+                id: authors
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: 'Authors'
+
+            MDLabel:
+                id: details
+                size_hint_y: None
+                text_size: self.width, None
+                height: self.texture_size[1]
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: 'Journal and article information'
+    
+            DetailSpacer:
+            MDLabel:
+                id: abstract
+                size_hint_y: Nonec
+                text_size: self.width, None
+                height: self.texture_size[1]
+                font_style: 'Subhead'
+                theme_text_color: 'Primary'
+                text: 'Abstract'
+                size_hint_y: None
+                
+            DetailSpacer:
+            MDList:
+                id: files_layout
+                size_hint_y: None
+
+            
+
+
+            
+<-MDTabbedPanel>:
+    id: panel
+    orientation: 'vertical' if panel.tab_orientation in ['top','bottom'] else 'horizontal'
+    BoxLayout:
+        id: scroll_view
+        size_hint_y: None
+        #height: dp(48)
+        height: panel._tab_display_height[panel.tab_display_mode]
+        
+        MDTabBar:
+            id: tab_bar
+            size_hint_y: None
+            size_hint_x: 0.55
+            #height: root.height
+            height: panel._tab_display_height[panel.tab_display_mode]
+            md_bg_color: panel.tab_color or panel.theme_cls.primary_color
+            canvas:
+                # Draw bottom border
+                Color:
+                    rgba: (panel.tab_border_color or panel.tab_color or panel.theme_cls.primary_dark)
+                Rectangle:
+                    size: (self.width,dp(2))
+        MDBoxLayout:   
+            id: box
+            size_hint_x: 0.45
+            md_bg_color: panel.tab_color or panel.theme_cls.primary_color
+            MDIcon:
+                color: 1,0.,0.,1
+                id: icon_search
+                size_hint_x: None
+                theme_text_color: 'Primary'
+                icon: 'magnify' 
+                width:dp(30)
+                halign: 'right'      
+            MDSearchInput:
+                #size_hint_x: 1
+                width: box.width-icon_search.width
+                id: search_input
+                padding: dp(12)#dp(15)
+                on_text: root._filter_search(self.text)
+
+
+    ScreenManager:
+        id: tab_manager
+        current: root.current
+        screens: root.tabs
+        transition: sm.SlideTransition()
+
+<MDIcon@MDLabel>:
+    icon: 'magnify'
+    font_style: 'Icon'
+    text: u"{}".format(md_icons[self.icon])
+    theme_text_color: root.theme_text_color
+    text_color: root.text_color
+    #disabled: root.disabled
+    valign: 'middle'
+    halign: 'center'
+    #opposite_colors: root.opposite_colors 
+
+
+   
+    
+<DetailLabel>:
+    size_hint_y: None
+    text_size: self.width, None
+    height: self.texture_size[1]
+    font_style: 'Subhead'
+    theme_text_color: 'Primary'
+    
+<ProgressDialog>:
+    size_hint: (.8, None)
+    height: dp(250)
+    auto_dismiss: True
+    GridLayout:
+        size_hint_y: None
+        cols: 1
+        MDProgressBar:
+            id: progress_bar
+        MDLabel:
+            font_style: 'Subhead'
+            theme_text_color: 'Primary'
+            text: root.info
+
+<LoadingDialog>:
+    size_hint: (.8, None)
+    height: dp(200)
+    auto_dismiss: True
+    GridLayout:
+        size_hint_y: None
+        cols: 1
+        MDSpinner:
+            id: spinner
+            size_hint: None, None
+            size: dp(46), dp(46)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            active: True
+        MDLabel:
+            font_style: 'Subhead'
+            theme_text_color: 'Primary'
+            text: root.info
+            shorten: True
+            shorten_from: 'right'
+            padding: 0,dp(16)
+
+#<Spinner>
+#    size_hint: None, None
+#    size: dp(46), dp(46)
+#    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+#    active: True if chkbox.active else False
+
+#<SettingPassword>:
+#	PasswordLabel:
+#		text: '(set)' if root.value else '(unset)'
+#		pos: root.pos
+#		font_size: '15sp'
+
+ 
+<MDSearchInput@TextInput>:
+    font_size: '15dp'
+    background_color: app.theme_cls.primary_color
+    foreground_color: 1,1,1,1
+    background_normal: 'art/textinput.png'
+    background_active: 'art/textinput.png'
+    cursor_color: 1.,0.25,0.5,1.
+    canvas.after:
+        Color:
+            rgba: .8, .8, .8, .7
+        Rectangle:
+            pos: self.x+self.padding[0], self.y+9
+            size: self.width-2*self.padding[0], 2.5  
+ 
+<SearchInput@TextInput>:
+    font_size: '14dp'
+    background_color: 1,1,1,1
+    foreground_color: 1,1,1,1
+    background_normal: 'art/textinput.png'
+    background_active: 'art/textinput.png'
+    cursor_color: get_color_from_hex('#000000')
+    canvas.before:
+        Color:
+            rgba: get_color_from_hex('#000000')
+    canvas.after:
+        Color:
+            rgb: 1,1,1,1#get_color_from_hex('#0f192e')
+        Ellipse:
+            angle_start:180
+            angle_end:360
+            pos:(self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Ellipse:
+            angle_start:360
+            angle_end:540
+            pos: (self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1])
+            size: (self.size[1], self.size[1])
+        Color:
+            rgba: get_color_from_hex('#3f92db')
+        Line:
+            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
+        Line:
+            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
+        Line:
+            ellipse: self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 180, 360
+        Line:
+            ellipse: self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 360, 540
+
+           
+<MDTextInput@TextInput>:
+    canvas:
+        Color: 
+            rgb: (1,1,1)
+    
+
+<MDPopup@MDDialog>:
+    text: ''
+    minimum_width: dp(350)
+    id: popup_dialog
+    size_hint: (None,None)
+    #width: self._action_area.width #+ dp(00)
+    #width: dp(184)
+    height: dp(220)
+    pos_hint: {'center_x': .5, 'center_y': .5}
+    #texture_size: content.size
+    MDLabel:
+        id: text
+        size: self.texture_size
+        font_style: 'Body1'
+        theme_text_color: 'Secondary'
+        text: root.text
+        size_hint_y: None
+        valign: 'top'
+        texture_size: self.size
+
+
+

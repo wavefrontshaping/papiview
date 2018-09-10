@@ -9,6 +9,10 @@ from __future__ import print_function
 from kivy.config import ConfigParser, Config
 Config.set('kivy','log_dir', 'logs')
 Config.set('kivy','log_name', 'kivy_%y-%m-%d_%_.txt')
+Config.add_section('global')
+Config.set('global','ui_style','ereader')
+
+UI_STYLE = Config.get('global','ui_style') 
 #Config.setdefaults('kivy', {
 #            'log_enable': 1,
 #            'log_level': 'info',
@@ -23,7 +27,7 @@ from kivy import kivy_home_dir
 
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.uix.image import Image
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -44,7 +48,7 @@ from kivymd.bottomsheet import MDListBottomSheet, MDGridBottomSheet
 from kivymd.button import MDIconButton, MDRaisedButton#, BaseRectangularButton, BaseFlatButton, BasePressedButton, BaseRoundButton
 from kivymd.spinner import MDSpinner
 #from kivymd.date_picker import MDDatePicker
-from kivymd.dialog import MDDialog
+#from kivymd.dialog import MDDialog
 from kivymd.label import MDLabel
 from kivymd.list import OneLineListItem#ILeftBody, ILeftBodyTouch, IRightBodyTouch, BaseListItem
 from kivymd.material_resources import DEVICE_TYPE
@@ -54,13 +58,13 @@ from kivymd.selectioncontrols import MDCheckbox
 #from kivymd.theming import ThemeManager
 #from kivymd.time_picker import MDTimePicker
 from kivymd.progressbar import MDProgressBar 
-from kivymd.theming import ThemableBehavior, ThemeManager
+
 #import kivymd.list
 
 from kivy.logger import Logger, LoggerHistory
 
-from kivy.uix.settings import SettingsWithSidebar,SettingsWithNoMenu
-from mdsettings import MDSettingString,MDSettingSpinner,MDSettingsWithTabbedPanel,MDSettingsWithSidebar,MDSettingPassword,MDSettingBool,MDSettingsWithSpinner,MDSettingsWithNoMenu
+
+
 from kivy.uix.settings import SettingString, SettingItem
 
 from kivymd.backgroundcolorbehavior import (BackgroundColorBehavior,
@@ -68,497 +72,30 @@ from kivymd.backgroundcolorbehavior import (BackgroundColorBehavior,
 
 
 
-from paper_list import PaperListItem
+
 
 
 import unidecode
 import re
 import os
 
-
-#import threading
-
-
-
-
-#%%
-
-
-main_widget_kv = '''
-#:import Toolbar kivymd.toolbar.Toolbar
-#:import ThemeManager kivymd.theming.ThemeManager
-#:import MDNavigationDrawer kivymd.navigationdrawer.MDNavigationDrawer
-#:import NavigationLayout kivymd.navigationdrawer.NavigationLayout
-#:import NavigationDrawerDivider kivymd.navigationdrawer.NavigationDrawerDivider
-#:import NavigationDrawerToolbar kivymd.navigationdrawer.NavigationDrawerToolbar
-#:import NavigationDrawerSubheader kivymd.navigationdrawer.NavigationDrawerSubheader
-#:import MDCheckbox kivymd.selectioncontrols.MDCheckbox
-#:import MDSwitch kivymd.selectioncontrols.MDSwitch
-#:import MDList kivymd.list.MDList
-#:import OneLineListItem kivymd.list.OneLineListItem
-#:import TwoLineListItem kivymd.list.TwoLineListItem
-#:import ThreeLineListItem kivymd.list.ThreeLineListItem
-#:import OneLineAvatarListItem kivymd.list.OneLineAvatarListItem
-#:import OneLineIconListItem kivymd.list.OneLineIconListItem
-#:import OneLineAvatarIconListItem kivymd.list.OneLineAvatarIconListItem
-#:import MDTextField kivymd.textfields.MDTextField
-#:import MDSpinner kivymd.spinner.MDSpinner
-#:import MDCard kivymd.card.MDCard
-#:import MDSeparator kivymd.card.MDSeparator
-#:import MDDropdownMenu kivymd.menu.MDDropdownMenu
-#:import get_color_from_hex kivy.utils.get_color_from_hex
-#:import colors kivymd.color_definitions.colors
-#:import SmartTile kivymd.grid.SmartTile
-#:import MDSlider kivymd.slider.MDSlider
-#:import MDTabbedPanel kivymd.tabs.MDTabbedPanel
-#:import MDTab kivymd.tabs.MDTab
-#:import MDProgressBar kivymd.progressbar.MDProgressBar
-#:import MDThemePicker kivymd.theme_picker.MDThemePicker
-#:import MDBottomNavigation kivymd.tabs.MDBottomNavigation
-#:import MDBottomNavigationItem kivymd.tabs.MDBottomNavigationItem
-#:import Settings kivy.uix.settings
-##:import SettingsString kivy.uix.settings.SettingsString
-##:import SettingsItem kivy.uix.settings.SettingsItem 
-
-NavigationLayout:
-    id: nav_layout
-    MDNavigationDrawer:
-        id: nav_drawer
-        NavigationDrawerToolbar:
-            title: "Menu"
-        NavigationDrawerIconButton:
-            id: lib_medu_btn
-            icon: 'library-books'
-            text: "Library"
-            on_release: app.root.ids.scr_mngr.current = 'library'
-        NavigationDrawerIconButton:
-            id: setting_menu_btn
-            icon: 'settings'
-            text: "Settings"
-            on_release: app.select_settings_scr()
-        NavigationDrawerIconButton:
-            id: info_menu_btn
-            icon: 'help-circle-outline'
-            text: "Information"
-            on_release: app.root.ids.scr_mngr.current = 'information'
-        NavigationDrawerIconButton:
-            id: logs_menu_btn
-            icon: 'code-brackets'#'developer-board'
-            text: "Logs"
-            on_release: app.root.ids.scr_mngr.current = 'logs'
-
-
-    BoxLayout:
-        orientation: 'vertical'
-        Toolbar:
-            id: toolbar
-            title: 'Papiview'
-            md_bg_color: app.theme_cls.primary_color
-            background_palette: 'Primary'
-            #background_hue: '500'
-            left_action_items: [['menu', lambda x: app.root.toggle_nav_drawer()]]
-            right_action_items: [['eraser', lambda x: app.clear_cache()],\
-                                 ['refresh', lambda x: app.load_library()],\
-                                 ['download', lambda x: app.load_offline()]]
-        ScreenManager:
-            id: scr_mngr
-            Screen:
-                name: 'library'
-                MDTabbedPanel:
-                    id: tab_panel
-                    tab_display_mode:'text' 
-
-                    MDTab:
-                        id: lib_tab
-                        name: 'library'
-                        text: "Library" # Why are these not set!!!
-                        #icon: "playlist-play"
-                        #md_bg_color: app.theme_cls.bg_dark
-                        #on_tab_touch_down: app.load_library_from_cache # does not work, why?
-                        ScrollView:
-                            do_scroll_x: False
-                            MDList:
-                                background_color: app.theme_cls.bg_dark
-                                id: ml
-                    MDTab:
-                        id: details_tab
-                        name: 'details'
-                        text: 'Details'
-                        #icon: "movie"
-                        JournalDetails:
-                            id: journal_details
-
-
-                    
-                            
-            Screen:
-                name: 'settings'
-                id: settings_screen
-                BoxLayout:
-                    id:settings_box
-                    title: 'Settings'
-
-            Screen:
-                name: 'information'
-                id: information_screen
-                ScrollView:
-                    GridLayout:
-                        id:information_box
-                        title: 'Information'
-                        cols: 1
-                        size_hint: 1.,None    
-                        height: self.minimum_height                  
-                        padding: dp(16)
-                        MDLabel:
-                            id: info_title
-                            size_hint: 1.,None 
-                            height: self.texture_size[1]
-                            theme_text_color: 'Primary'
-                            text: self.parent.title
-                            font_style: 'Title'
-                            padding: 0,dp(4)
-                        MDLabel:
-                            size_hint: 1.,None 
-                            height: self.texture_size[1]
-                            id: info_content
-                            font_style: 'Subhead'#'Body1'
-                            theme_text_color: 'Primary'
-                            markup: True
-                            halign: 'justify'
-                            padding: 0,dp(4)
-                            text: 'test [color=ff3333]Hello[/color]'
-                            on_ref_press:
-                                from android_interactions import open_url
-                                #import webbrowser
-                                open_url(args[1])
-                                #webbrowser.open(args[1])
-
-            Screen:
-                name: 'logs'
-                id: logs_screen
-                GridLayout:
-                    cols: 1
-                    padding: dp(16)
-                    ScrollView:
-                        GridLayout:
-                            id:information_box
-                            title: 'Logs'
-                            cols: 1
-                            size_hint: 1.,None    
-                            height: self.minimum_height                  
-                            
-                            MDLabel:
-                                #id: logs_title
-                                size_hint: 1.,None 
-                                height: self.texture_size[1]
-                                theme_text_color: 'Primary'
-                                text: self.parent.title
-                                font_style: 'Title'
-                                padding: 0,dp(4)
-                            MDLabel:
-                                size_hint: 1.,None 
-                                height: self.texture_size[1]
-                                id: logs_content
-                                font_style: 'Subhead'#'Body1'
-                                theme_text_color: 'Primary'
-                                markup: True
-    #                            shorten: True 
-    #                            shorten_from: 'right'
-                                text: 'test [color=ff3333]Hello[/color]'   
-                                padding: 0,dp(4) 
-                    AnchorLayout:
-                        #cols: 1
-                        anchor_x: 'center'
-                        anchor_y: 'center'
-                        size_hint: 1,None
-                        height: dp(54)
-                        MDRaisedButton:
-                            #size_hint: None,None
-                            padding: dp(16)
-                            text: 'Refresh'
-                            on_release:
-                                app.load_logs()
-
-        
-<DetailSpacer>:
-    size_hint_y: None
-    height: 20
-    canvas:
-        Color:
-            rgb: .5, .5, .5
-        Rectangle:
-            pos: self.x, self.center_y
-            size: self.width, 1   
-
-<File>:
-    MDLabel:
-        size_hint_y: None
-        theme_text_color: 'Primary'
-        text: root.filename or ''
-               
-                
-<JournalDetails>:
-    details_content: details_content
-    ScrollView:
-        do_scroll_x: False
-#        size_hint: (1, None)
-        #size: (Window.width, Window.height)
-        
-        GridLayout:
-            id: details_content
-            size_hint_y: None
-            cols: 1
-            padding: dp(20)
-#            orientation: 'vertical'
-#            pos: root.pos[0]+dp(200),root.pos[1]+dp(20)
-#            minimum_height: self.height
-            height: 1.2*self.minimum_height
-            #minimum_height: self.setter('height')
-            #size: root.width, root.height
-            MDLabel:
-                id: title
-                size_hint_y: None
-                text_size: self.width, None
-                height: self.texture_size[1]
-                font_style: 'Headline'
-                theme_text_color: 'Primary'
-                text: 'Title'
+if UI_STYLE == 'md':
+    from kivymd.theming import ThemableBehavior, ThemeManager
+    from ui.main_md import MDBoxLayout, MDFloatLayout
+    from ui.main_md import PapDialog, PapPopup, ProgressDialog, DetailLabel
+    from ui.main_md import SETTINGS_CLS
+    from paper_list import PaperListItem, ListItem
+    from mdsettings import MDSettingString,MDSettingSpinner,MDSettingsWithTabbedPanel,\
+                           MDSettingsWithSidebar,MDSettingPassword,MDSettingBool,\
+                           MDSettingsWithSpinner,MDSettingsWithNoMenu
     
-            DetailSpacer:
-            MDLabel:
-                id: authors
-                size_hint_y: None
-                text_size: self.width, None
-                height: self.texture_size[1]
-                font_style: 'Subhead'
-                theme_text_color: 'Primary'
-                text: 'Authors'
-
-            MDLabel:
-                id: details
-                size_hint_y: None
-                text_size: self.width, None
-                height: self.texture_size[1]
-                font_style: 'Subhead'
-                theme_text_color: 'Primary'
-                text: 'Journal and article information'
-    
-            DetailSpacer:
-            MDLabel:
-                id: abstract
-                size_hint_y: Nonec
-                text_size: self.width, None
-                height: self.texture_size[1]
-                font_style: 'Subhead'
-                theme_text_color: 'Primary'
-                text: 'Abstract'
-                size_hint_y: None
-                
-            DetailSpacer:
-            MDList:
-                id: files_layout
-                size_hint_y: None
-
-            
-
-
-            
-<-MDTabbedPanel>:
-    id: panel
-    orientation: 'vertical' if panel.tab_orientation in ['top','bottom'] else 'horizontal'
-    BoxLayout:
-        id: scroll_view
-        size_hint_y: None
-        #height: dp(48)
-        height: panel._tab_display_height[panel.tab_display_mode]
-        
-        MDTabBar:
-            id: tab_bar
-            size_hint_y: None
-            size_hint_x: 0.55
-            #height: root.height
-            height: panel._tab_display_height[panel.tab_display_mode]
-            md_bg_color: panel.tab_color or panel.theme_cls.primary_color
-            canvas:
-                # Draw bottom border
-                Color:
-                    rgba: (panel.tab_border_color or panel.tab_color or panel.theme_cls.primary_dark)
-                Rectangle:
-                    size: (self.width,dp(2))
-        MDBoxLayout:   
-            id: box
-            size_hint_x: 0.45
-            md_bg_color: panel.tab_color or panel.theme_cls.primary_color
-            MDIcon:
-                color: 1,0.,0.,1
-                id: icon_search
-                size_hint_x: None
-                theme_text_color: 'Primary'
-                icon: 'magnify' 
-                width:dp(30)
-                halign: 'right'      
-            MDSearchInput:
-                #size_hint_x: 1
-                width: box.width-icon_search.width
-                id: search_input
-                padding: dp(12)#dp(15)
-                on_text: root._filter_search(self.text)
-
-
-    ScreenManager:
-        id: tab_manager
-        current: root.current
-        screens: root.tabs
-        transition: sm.SlideTransition()
-
-<MDIcon@MDLabel>:
-    icon: 'magnify'
-    font_style: 'Icon'
-    text: u"{}".format(md_icons[self.icon])
-    theme_text_color: root.theme_text_color
-    text_color: root.text_color
-    #disabled: root.disabled
-    valign: 'middle'
-    halign: 'center'
-    #opposite_colors: root.opposite_colors 
-
-
-   
-    
-<DetailLabel>:
-    size_hint_y: None
-    text_size: self.width, None
-    height: self.texture_size[1]
-    font_style: 'Subhead'
-    theme_text_color: 'Primary'
-    
-<ProgressDialog>:
-    size_hint: (.8, None)
-    height: dp(250)
-    auto_dismiss: True
-    GridLayout:
-        size_hint_y: None
-        cols: 1
-        MDProgressBar:
-            id: progress_bar
-        MDLabel:
-            font_style: 'Subhead'
-            theme_text_color: 'Primary'
-            text: root.info
-
-<LoadingDialog>:
-    size_hint: (.8, None)
-    height: dp(200)
-    auto_dismiss: True
-    GridLayout:
-        size_hint_y: None
-        cols: 1
-        MDSpinner:
-            id: spinner
-            size_hint: None, None
-            size: dp(46), dp(46)
-            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-            active: True
-        MDLabel:
-            font_style: 'Subhead'
-            theme_text_color: 'Primary'
-            text: root.info
-            shorten: True
-            shorten_from: 'right'
-            padding: 0,dp(16)
-
-#<Spinner>
-#    size_hint: None, None
-#    size: dp(46), dp(46)
-#    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-#    active: True if chkbox.active else False
-
-#<SettingPassword>:
-#	PasswordLabel:
-#		text: '(set)' if root.value else '(unset)'
-#		pos: root.pos
-#		font_size: '15sp'
-
- 
-<MDSearchInput@TextInput>:
-    font_size: '15dp'
-    background_color: app.theme_cls.primary_color
-    foreground_color: 1,1,1,1
-    background_normal: 'art/textinput.png'
-    background_active: 'art/textinput.png'
-    cursor_color: 1.,0.25,0.5,1.
-    canvas.after:
-        Color:
-            rgba: .8, .8, .8, .7
-        Rectangle:
-            pos: self.x+self.padding[0], self.y+9
-            size: self.width-2*self.padding[0], 2.5  
- 
-<SearchInput@TextInput>:
-    font_size: '14dp'
-    background_color: 1,1,1,1
-    foreground_color: 1,1,1,1
-    background_normal: 'art/textinput.png'
-    background_active: 'art/textinput.png'
-    cursor_color: get_color_from_hex('#000000')
-    canvas.before:
-        Color:
-            rgba: get_color_from_hex('#000000')
-    canvas.after:
-        Color:
-            rgb: 1,1,1,1#get_color_from_hex('#0f192e')
-        Ellipse:
-            angle_start:180
-            angle_end:360
-            pos:(self.pos[0] - self.size[1]/2.0, self.pos[1])
-            size: (self.size[1], self.size[1])
-        Ellipse:
-            angle_start:360
-            angle_end:540
-            pos: (self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1])
-            size: (self.size[1], self.size[1])
-        Color:
-            rgba: get_color_from_hex('#3f92db')
-        Line:
-            points: self.pos[0] , self.pos[1], self.pos[0] + self.size[0], self.pos[1]
-        Line:
-            points: self.pos[0], self.pos[1] + self.size[1], self.pos[0] + self.size[0], self.pos[1] + self.size[1]
-        Line:
-            ellipse: self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 180, 360
-        Line:
-            ellipse: self.size[0] + self.pos[0] - self.size[1]/2.0, self.pos[1], self.size[1], self.size[1], 360, 540
-
-           
-<MDTextInput@TextInput>:
-    canvas:
-        Color: 
-            rgb: (1,1,1)
-    
-
-<MDPopup@MDDialog>:
-    text: ''
-    minimum_width: dp(350)
-    id: popup_dialog
-    size_hint: (None,None)
-    #width: self._action_area.width #+ dp(00)
-    #width: dp(184)
-    height: dp(220)
-    pos_hint: {'center_x': .5, 'center_y': .5}
-    #texture_size: content.size
-    MDLabel:
-        id: text
-        size: self.texture_size
-        font_style: 'Body1'
-        theme_text_color: 'Secondary'
-        text: root.text
-        size_hint_y: None
-        valign: 'top'
-        texture_size: self.size
-
-
-        
-'''
-
+elif UI_STYLE == 'ereader':
+    from ui.main_ereader import PapDialog, PapPopup, YNPopup, PaperListItem, ListItem#, ProgressDialog
+    from kivy.uix.settings import SettingsWithSidebar,SettingsWithNoMenu, SettingBoolean, SettingString, SettingOptions
+    from ui.main_ereader import SETTINGS_CLS, DetailLabel
+    from ui.main_ereader import BWThemeManager #as ThemeManager
+    from ui.main_ereader import BWSettingString,BWSettingOptions,\
+                                BWSettingPassword,BWSettingBoolean
 
 
 def get_info(dic,key,default = ''):
@@ -585,29 +122,36 @@ def clean_text(text):
 #        self.dialog.dismiss()
 #        App.get_running_app().Exit()
 
-class MDPopup(MDDialog):
-    pass
+#class MDPopup(MDDialog):
+#    pass
 
-class YNPopup(MDPopup):
-    def __init__(self, **kwargs):
-        super(YNPopup, self).__init__(**kwargs)
-        self.add_action_button("No",
-                                      action=lambda *x: self.on_no(x))
-        self.add_action_button("Yes",
-                                      action=lambda *x: self.on_yes(x))
-        self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+dp(100)))
-    def _on_yes(self):
-        self.on(yes)
-        self.dismiss()
+#class YNPopup(PapPopup):
+#    def __init__(self, **kwargs):
+#        super(YNPopup, self).__init__(**kwargs)
+#        self.add_action_button("No",
+#                                      action=lambda *x: self.on_no(x))
+#        self.add_action_button("Yes",
+#                                      action=lambda *x: self.on_yes(x))
+#        # when width of action_area changes, it calls the setter function for self.width
+#        
 
-    def on_yes(self):
-        pass
+#        #self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+self.add_width))
+#        self.width=dp(400)
 
-    def on_no(self,*args):
-        self.dismiss()
+#        #self.ids.text.bind(width= lambda x,y: self.setter('height')(x,y))
+#        #self._action_area.bind(height= lambda x,y: self.setter('height')(x+dp(800),y+dp(800)))
+#    def _on_yes(self):
+#        self.on(yes)
+#        self.dismiss()
+
+#    def on_yes(self):
+#        pass
+
+#    def on_no(self,*args):
+#        self.dismiss()
         
 
-class ExitPopup(MDPopup):
+class ExitPopup(PapPopup):
 
     def __init__(self, **kwargs):
         super(ExitPopup, self).__init__(**kwargs)
@@ -628,7 +172,7 @@ class ExitPopup(MDPopup):
         App.get_running_app().stop()
 
 
-class LoadingDialog(MDDialog):
+class LoadingDialog(PapDialog):
     info = StringProperty('')
     def stop(self):
         pass
@@ -637,24 +181,13 @@ class LoadingDialog(MDDialog):
         self.add_action_button("Cancel", action=lambda x: self.stop())
         
 
-class ProgressDialog(MDDialog):
-    info = StringProperty('None')
-    def stop(self):
-        pass
-    def __init__(self,**kwargs):
-        super(ProgressDialog, self).__init__(**kwargs)
-        self.add_action_button("Cancel", action=lambda x: self.stop())
+
         
         
 
-class DetailLabel(MDLabel):
-    pass
 
-class MDBoxLayout(ThemableBehavior,BackgroundColorBehavior,BoxLayout):
-    pass
 
-class MDFloatLayout(ThemableBehavior,BackgroundColorBehavior,FloatLayout):
-    pass
+
 
 
 class File(BoxLayout):
@@ -664,17 +197,20 @@ class File(BoxLayout):
 #        self.filename = 'no file'
 #    pass
 
-class DetailSpacer(Widget):
-    # Internal class, not documented.
-    pass
-
-class ListItem(OneLineListItem):
-    def refresh_detail(self,ind):
-        pass
-    def on_release(self):
-        pass
 
 
+
+
+class ProgressDialog(PapDialog):
+    progress_bar = ObjectProperty()
+    max_value = NumericProperty()
+    progress_value = NumericProperty()
+    info = StringProperty('None')
+#    def stop(self):
+#        pass
+    def __init__(self,**kwargs):
+        super(ProgressDialog, self).__init__(**kwargs)
+        self.add_action_button("Cancel", action=lambda x: self.dismiss())
 
 class JournalDetails(FloatLayout):
 #    details_content = ObjectProperty(None)
@@ -703,7 +239,7 @@ class JournalDetails(FloatLayout):
         self.ids.abstract.text = Doc('abstract','No abstract')
 
         details = []
-        details.append(Doc('journal') if Doc('journal') else 'arxiv' if 'eprint' in document.keys() else '')
+        details.append('[u]%s[/u]' % Doc('journal') if Doc('journal') else 'arxiv' if 'eprint' in document.keys() else '')
         details.append('Vol. '+ Doc('volume','0')) 
         details.append('Issue '+ Doc('number','0'))
         if 'pages' in document.keys():
@@ -746,28 +282,38 @@ class JournalDetails(FloatLayout):
 
 
 
-class HackedDemoNavDrawer(MDNavigationDrawer):
-    # DO NOT USE
-    def add_widget(self, widget, index=0):
-        if issubclass(widget.__class__, BaseListItem):
-            self._list.add_widget(widget, index)
-            if len(self._list.children) == 1:
-                widget._active = True
-                self.active_item = widget
-            # widget.bind(on_release=lambda x: self.panel.toggle_state())
-            widget.bind(on_release=lambda x: x._set_active(True, list=self))
-        elif issubclass(widget.__class__, NavigationDrawerHeaderBase):
-            self._header_container.add_widget(widget)
-        else:
-            super(MDNavigationDrawer, self).add_widget(widget, index)
+#class HackedDemoNavDrawer(MDNavigationDrawer):
+#    # DO NOT USE
+#    def add_widget(self, widget, index=0):
+#        if issubclass(widget.__class__, BaseListItem):
+#            self._list.add_widget(widget, index)
+#            if len(self._list.children) == 1:
+#                widget._active = True
+#                self.active_item = widget
+#            # widget.bind(on_release=lambda x: self.panel.toggle_state())
+#            widget.bind(on_release=lambda x: x._set_active(True, list=self))
+#        elif issubclass(widget.__class__, NavigationDrawerHeaderBase):
+#            self._header_container.add_widget(widget)
+#        else:
+#            super(MDNavigationDrawer, self).add_widget(widget, index)
          
 
 class Papiview(App):
     use_kivy_settings = False
-    theme_cls = ThemeManager()
+    
     previous_date = ObjectProperty()
     title = "Papiview"
-    settings_cls = MDSettingsWithNoMenu
+    settings_cls = SETTINGS_CLS
+    print('--'*50)
+    print(SETTINGS_CLS)
+    if UI_STYLE == 'md':
+        theme_cls = ThemeManager()
+    elif UI_STYLE == 'ereader':
+        bwtheme_cls = BWThemeManager()
+        
+#        settings_cls = MDSettingsWithNoMenu 
+#    elif UI_STYLE == 'ereader':  
+#        settings_cls = MDSettingsWithTabbedPanel
     app_version = StringProperty(__version__)
     #MDSettingsWithSidebar
     #MDSettingsWithTabbedPanel
@@ -783,7 +329,7 @@ class Papiview(App):
                           size_hint_y=None,
                           valign='top')
         content.bind(texture_size=content.setter('size'))
-        self.dialog = MDDialog(title=title,
+        self.dialog = PapDialog(title=title,
                                content=content,
                                size_hint=(.8, None),
                                height=dp(350),
@@ -797,9 +343,22 @@ class Papiview(App):
         
     def build(self):
 #        config = self.config
-        main_widget = Builder.load_string(main_widget_kv)
+        #main_widget = Builder.load_string(main_widget_kv)
+        self.ui_style = Config.get('global','ui_style')
+        if UI_STYLE == 'md':
+            main_widget = Builder.load_file('ui/main_md.kv')
+            self.theme_cls.theme_style = 'Dark'
+        elif UI_STYLE == 'ereader':
+            main_widget = Builder.load_file('ui/main_ereader.kv')
+            self.bwtheme_cls.style = 'Light'
+#            self.theme_cls.theme_style = 'Light'
+#            self.theme_cls.primary_palette = 'Grey'
+#            self.theme_cls.primary_hue = '400'
+#            self.theme_cls.primary_dark_hue = '900'
+#            self.theme_cls.primary_light_hue = '200'
+            #self.theme_cls.main_background_color = 
         #main_widget = Builder.load_file('papiview.kv')
-        self.theme_cls.theme_style = 'Dark'
+        
 
 #        self.bottom_navigation_remove_mobile(main_widget)
         self.doc_list = []
@@ -807,8 +366,8 @@ class Papiview(App):
         self.loader = None
         self.progress_dialog = None
         list
-        
-        
+     
+
         return main_widget
     
 
@@ -843,6 +402,12 @@ class Papiview(App):
         
         self.load_info()
         self.load_logs()
+
+#        from kivy.uix.button import Button
+#        for i in range(25):
+#            btn = Button(text='truc %g' % i,size_hint_y=None,height=dp(60))
+#            self.root.ids.test_list.add_list_element(btn)  
+#        self.root.ids.test_list.update_visible_list()
     
     def key_handler(self, window, keycode1, keycode2, text, modifiers):
         '''
@@ -858,10 +423,18 @@ class Papiview(App):
         return os.path.join(self.user_data_dir,"config.ini")
 
 
+    def select_screen(self,x):
         
+#        print(x.name)
+#        if x.name == 'settings':
+#            self.root.ids.settings_screen.add_widget(settings)
+#        else:
+        self.root.ids.scr_mngr.current = x.name
+        x.parent.parent.dismiss()        
         
     def display_settings(self,settings):
         self.root.ids.settings_screen.add_widget(settings)
+        #self._app_window.add_widget(settings)
 #        if settings not in self.root.ids.settings_panel.children:
             #self.root.ids.settings_panel
             #self._app_window.add_widget(settings)
@@ -870,15 +443,23 @@ class Papiview(App):
         
         
     def build_settings(self,settings):
-        settings.register_type('mdstring', MDSettingString)
-        settings.register_type('mdbool', MDSettingBool)
-        settings.register_type('mdpassword', MDSettingPassword)
-        settings.register_type('mdspinner', MDSettingSpinner)
+
+        if UI_STYLE == 'md':
+            settings.register_type('mdstring', MDSettingString)
+            settings.register_type('mdbool', MDSettingBool)
+            settings.register_type('mdpassword', MDSettingPassword)
+            settings.register_type('mdspinner', MDSettingSpinner)
+        elif UI_STYLE == 'ereader':
+            settings.register_type('mdstring', BWSettingString)
+            settings.register_type('mdbool', BWSettingBoolean)
+            settings.register_type('mdpassword', BWSettingPassword)
+            settings.register_type('mdspinner', BWSettingOptions)
+
         settings.add_json_panel('Global', self.config, 'settings.json')   
         settings.add_json_panel('Webdav', self.config, 'webdav.json')     
         settings.add_json_panel('SFTP', self.config, 'sftp.json')  
         self.settings = settings
-        self.settings.md_bg_color = self.root.theme_cls.bg_dark
+        #self.settings.md_bg_color = self.root.theme_cls.bg_dark
         settings.on_config_change = self.on_config_change
      
     
@@ -890,12 +471,13 @@ class Papiview(App):
         selected document.
         '''
         document = self.filt_doc_list[ind]
-        #print(document.keys())
         folder = document.get_main_folder_name()
+        
+        if self.ui_style == 'md':
+            self.root.ids.details_tab.on_release()
+        elif self.ui_style == 'ereader':
+            self.root.ids.scr_mngr.current = 'details'
 
-        #folder = self.dir_list[ind]
-        # switch to the details tab
-        self.root.ids.details_tab.on_tab_press()
         # clear previous details
 #        self.root.ids.details_tab.clear_widgets()
         self.root.ids.journal_details.openFile = lambda x,y: Clock.schedule_once(lambda z: self.open_file(x,y),1.)
@@ -907,22 +489,31 @@ class Papiview(App):
     def open_file(self,paper_dir,file_name):
         self.connect_loader()
         self.loader.open_file(paper_dir,file_name)
-#
+
     def go_back(self):
-        if self.root.ids.scr_mngr.current == 'library' and self.root.ids.tab_panel.ids.tab_manager.current == 'library':
-            ExitPopup()         
-#            exit_popup.bind() 
-#self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+dp(100)))
-            #app.Exit()
-        elif self.root.ids.scr_mngr.current == 'library':
-            self.root.ids.lib_tab.on_tab_press()
-        else:
-            self.root.ids.scr_mngr.current = 'library'
-            
-            ## Manually set all button in the menu to not active except the first one
-            ## i.e. go back selecting the library button
-            for c in  self.root.ids.nav_drawer._list.children:
-                c._active = True if c.text == 'Library' else False  
+
+        if UI_STYLE == 'ereader':
+            if self.root.ids.scr_mngr.current == 'library':
+                ExitPopup()         
+            else:
+                self.root.ids.scr_mngr.current = 'library'
+
+
+#    def go_back(self):
+#        if self.root.ids.scr_mngr.current == 'library' and self.root.ids.tab_panel.ids.tab_manager.current == 'library':
+#            ExitPopup()         
+##            exit_popup.bind() 
+##self._action_area.bind(width= lambda x,y: self.setter('width')(x,y+dp(100)))
+#            #app.Exit()
+#        elif self.root.ids.scr_mngr.current == 'library':
+#            self.root.ids.lib_tab.on_tab_press()
+#        else:
+#            self.root.ids.scr_mngr.current = 'library'
+#            
+#            ## Manually set all button in the menu to not active except the first one
+#            ## i.e. go back selecting the library button
+#            for c in  self.root.ids.nav_drawer._list.children:
+#                c._active = True if c.text == 'Library' else False  
  
 
     def select_settings_scr(self):
@@ -979,8 +570,11 @@ class Papiview(App):
     def _load_offline(self):
         popup = YNPopup()
         popup.title = 'Offline download'
-        popup.text = "Do you want to donwload all the documents for offline use?\nThis may take a while"
-        popup.on_yes = lambda x: self.load_library(offline = True)
+        popup.text = "Donwload documents for offline use?\nThis may take a while"
+        def action(x):
+            self.load_library(offline = True)
+            Clock.schedule_once(lambda x: popup.dismiss(),1.)            
+        popup.on_yes = action
         #popup.on_yes = lambda x: self.download_all_documents()
         popup.open()
 
@@ -999,18 +593,32 @@ class Papiview(App):
         
         
     def refresh_cache(self,download_all=False):
-        
-        self.open_progress_dialog("Loading library")
+#         def stop():
+#            self.loader.abord = True
+#            self.progress_dialog.dismiss()
+##
+##        self.progress_bar.add_action_button("Cancel",
+##                                      action=stop)
+#        self.progress_dialog = ProgressDialog(title=title)
+#        self.progress_dialog.stop = stop
+#        self.progress_dialog.open()       
+#        self.open_progress_dialog("Loading library")
+        progress_dialog = ProgressDialog(title='Loading library')
+        progress_dialog.bind(on_dismiss=lambda x: self.loader.trigger_abord())
+        progress_dialog.open()
+
         if not self.loader:
             self.init_loader()
-        ret = self.loader.load_remote_to_cache(self.progress_dialog,
+#        ret = 
+        Clock.schedule_once(lambda dt: self.loader.load_remote_to_cache(progress_dialog,
                                                 end_action = self.load_library_from_cache,
                                                 download_all=download_all,
                                                 thread_count = self.config.getint('global','max_dl_thread'),
                                                 max_tries = self.config.getint('global', 'max_dl_retries'))
-        if not ret:
-            self.loader.abord = True
-            self.progress_dialog.dismiss()
+                            )
+#        if not ret:
+#            self.loader.abord = True
+#            self.progress_dialog.dismiss()
         self.doc_list=[]
         self.filt_doc_list=[]
 
@@ -1021,21 +629,34 @@ class Papiview(App):
         self.refresh_list()
        
     def filter_doc_list(self,search):
+        print('++'*15)
+        print(search)
         self.filt_doc_list = [doc for doc in self.doc_list if \
                      search.lower() in unidecode.unidecode(doc['title']).lower() \
                      or search.lower() in unidecode.unidecode(doc['author']).lower() \
                      or search.lower() in unidecode.unidecode(doc['year']).lower()]
+        print(self.filt_doc_list)
         self.refresh_list()
 
     def refresh_list(self):
-        self.root.ids.ml.clear_widgets()
         
-
+#        self.root.ids.article_list.clear_widgets()
+        widget_list = self.root.ids.article_list
+        if Config.get('global','ui_style') == 'md':
+            widget_list.clear_widgets()
+            #self.root.ids.article_list.clear_widgets()
+        elif Config.get('global','ui_style') == 'ereader':   
+            widget_list.clear_list()
+            #self.root.ids.article_list.content.clear_widgets()
+#            self.root.ids.article_list.content.clear_widgets()#, ProgressDialog
+        
+        
+        print([x['title'] for x in self.filt_doc_list])
 #        for child in [child for child in self.root.ids.ml.children]:
 #            self.root.ids.ml.remove_widget(child)
         for ind,doc in enumerate(self.filt_doc_list):
             second_line = doc['author'].replace('\n',''  )[:160]        
-            third_line = doc['journal'] if 'journal' in doc.keys() else ''
+            third_line = '[u]%s[/u]' % doc['journal'] if 'journal' in doc.keys() else ''
             third_line += ' (%s)' % doc['year'] if 'year' in doc.keys() else ''
             new_item =  PaperListItem(file_id = ind,#id = 'doc_'+str(ind),
 		                                text = clean_text(doc['title']),
@@ -1043,14 +664,24 @@ class Papiview(App):
                                         tertiary_text = clean_text(third_line))
 		                               #secondary_text = second_line +   '\n' + third_line)
             new_item.bind(on_release=lambda x: self.refresh_details(x.file_id))
+            print(new_item.text)
             #new_item.refresh_details = self.refresh_details
             #   self.root.ids.tab_panel.current = 'details_tab'
             #self.root.ids.tab_panel.tab_manager.transition.direction = "right"#self.root.ids.tab_details.on_tab_press()
-            self.root.ids.ml.add_widget(new_item)
-    
+            if Config.get('global','ui_style') == 'md':
+                widget_list.add_widget(new_item)
+            elif Config.get('global','ui_style') == 'ereader':
+                widget_list.add_list_element(new_item)#, ProgressDialog
+        Clock.schedule_once(widget_list.update_visible_list,0.5)
+            #self.root.ids.ml.add_widget(new_item)
+        
+        print('ff'*120)
+        print(widget_list.item_list)
+
     def load_library_from_cache(self):
         if not self.loader:
             self.init_loader()
+        ## TO ADD: Wait for all the thread to stop when cancel before returning the partial list
         self.doc_list = self.loader.get_documents_from_cache()#get_local_folders()
         self.filt_doc_list = self.doc_list
         self.refresh_list()
@@ -1079,28 +710,27 @@ class Papiview(App):
         self.loading_dialog.stop = stop
         self.loading_dialog.open()
 
-    def open_progress_dialog(self,title=''):
-#        content = BoxLayout(orientation='vertical',spacing=dp(10),padding = dp(20))
-#        content = MDProgressBar(value = 0)
-##        content.add_widget(progress)
-##        content.bind()
-#        #content.bind(texture_size=content.setter('size'))
-#        self.progress_bar = MDDialog(title=title,
-#                               content=content,
-#                               size_hint=(.8, None),
-#                               height=dp(200),
-#                               auto_dismiss=True)
-#        
-        def stop():
-            print('clicl '*150)
-            self.loader.abord = True
-            self.progress_dialog.dismiss()
-#
-#        self.progress_bar.add_action_button("Cancel",
-#                                      action=stop)
-        self.progress_dialog = ProgressDialog(title=title)
-        self.progress_dialog.stop = stop
-        self.progress_dialog.open()
+#    def open_progress_dialog(self,title=''):
+##        content = BoxLayout(orientation='vertical',spacing=dp(10),padding = dp(20))
+##        content = MDProgressBar(value = 0)
+###        content.add_widget(progress)
+###        content.bind()
+##        #content.bind(texture_size=content.setter('size'))
+##        self.progress_bar = MDDialog(title=title,
+##                               content=content,
+##                               size_hint=(.8, None),
+##                               height=dp(200),
+##                               auto_dismiss=True)
+##        
+#        def stop():
+#            self.loader.abord = True
+#            self.progress_dialog.dismiss()
+##
+##        self.progress_bar.add_action_button("Cancel",
+##                                      action=stop)
+#        self.progress_dialog = ProgressDialog(title=title)
+#        self.progress_dialog.stop = stop
+#        self.progress_dialog.open()
     
     def open_text_link(self,x):
         print(x)
@@ -1118,7 +748,8 @@ class Papiview(App):
     def on_start(self):
         self.post_build_init()
         self.open_settings()
-        self.root.ids.tab_panel._filter_search = self.filter_doc_list
+        if UI_STYLE == 'md':
+            self.root.ids.tab_panel._filter_search = self.filter_doc_list
         self.load_library_from_cache()
 
     def on_stop(self):
